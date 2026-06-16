@@ -145,6 +145,10 @@ section{padding:80px 24px;position:relative;z-index:1}
 .wrc-arrow span:nth-child(2){animation-delay:.4s}
 .wrc-arrow span:nth-child(3){animation-delay:.8s}
 
+.video-phone{padding:0;overflow:hidden;border-color:var(--cyan)}
+.video-phone video{width:100%;height:100%;object-fit:cover;display:block}
+
+
 /* ===== DOWNLOAD ===== */
 .dl-section{text-align:center}
 .dl-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;max-width:540px;margin:40px auto 0;padding:40px 32px;position:relative;overflow:hidden}
@@ -357,12 +361,10 @@ footer{background:var(--surface);border-top:1px solid var(--border);padding:28px
   <div class="wrc-inner">
     <div class="wrc-visual">
       <div class="wrc-phones">
-        <div class="wrc-phone active">
-          <div style="font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--cyan);letter-spacing:1px">TWÓJ EKRAN</div>
-          <div class="wrc-stream-icon">📱</div>
-          <div style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--muted)">rzut rywala ↓</div>
-          <div style="width:60px;height:40px;background:#0a0a0f;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:18px;border:1px solid var(--border)">🎯</div>
-          <div class="wrc-cam-dot live"></div>
+        <div class="wrc-phone active video-phone">
+          <video autoplay muted loop playsinline preload="auto">
+            <source src="przemiana.mp4" type="video/mp4">
+          </video>
         </div>
         <div class="wrc-arrow">
           <span>⟷</span>
