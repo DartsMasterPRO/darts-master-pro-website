@@ -176,10 +176,16 @@ footer{background:var(--surface);border-top:1px solid var(--border);padding:28px
 /* ===== RESPONSIVE ===== */
 @media(max-width:660px){
   nav{padding:14px 18px}
+  .nav-dl{font-size:12px;padding:7px 14px}        /* ← NOWE: mniejszy przycisk nav */
+
   .stats-bar{gap:20px;padding:18px}
   .stat-num{font-size:26px}
-  .wrc-inner{grid-template-columns:1fr;gap:32px}
-  .wrc-phones .wrc-phone:last-child{display:none}
+
+  .wrc-inner{grid-template-columns:1fr;gap:32px;text-align:center}  /* ← dodaj text-align */
+  .wrc-visual{display:none}                        /* ← NOWE: ukryj cały visual na mobile */
+
+  .dl-card{padding:28px 18px}                      /* ← NOWE: mniejszy padding */
+
   .how-step{gap:14px}
   .how-num{font-size:36px;width:40px}
   section{padding:56px 18px}
