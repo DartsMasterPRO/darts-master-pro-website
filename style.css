@@ -249,6 +249,16 @@ section{
 padding:50px 20px;
 
 }
+.feature-list{
+    list-style:none;
+    padding:0;
+    margin:20px 0 0;
+    text-align:center;
+}
 
+.feature-list li{
+    margin:12px 0;
+    line-height:1.6;
+}
 
 }
