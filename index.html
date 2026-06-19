@@ -165,7 +165,7 @@ section{padding:80px 24px;position:relative;z-index:1}
 .faq-q::after{content:'+';font-size:22px;color:var(--muted);transition:transform .2s;flex-shrink:0}
 .faq-item.open .faq-q::after{transform:rotate(45deg);color:var(--red)}
 .faq-a{font-size:14px;color:var(--muted);line-height:1.7;max-height:0;overflow:hidden;transition:max-height .3s ease,padding .3s}
-.faq-item.open .faq-a{max-height:200px;padding-bottom:18px}
+.faq-item.open .faq-a{max-height:600px;padding-bottom:18px;overflow-y:auto}
 
 /* ===== FOOTER ===== */
 footer{background:var(--surface);border-top:1px solid var(--border);padding:28px 32px;text-align:center;position:relative;z-index:1}
@@ -456,6 +456,96 @@ footer{background:var(--surface);border-top:1px solid var(--border);padding:28px
       <div class="faq-q" onclick="toggleFaq(this)">Czy aplikacja będzie aktualizowana?</div>
       <div class="faq-a">Tak. Gdy pojawi się nowa wersja, apliakcja automatycznie aktualizuje się na Twoim urządzeniu. Czasem konieczne jest wyczyszczenie pamięci podręcznej przeglądarki. Historia gier i konto online zostają — nic nie tracisz.</div>
     </div>
+<div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">Regulamin</div>
+      <div class="faq-a">Regulamin korzystania z aplikacji DartsMaster Pro
+
+Data ostatniej aktualizacji: [DATA]
+
+§1. Postanowienia ogólne
+
+
+Niniejszy Regulamin określa zasady korzystania z aplikacji DartsMaster Pro (dalej: „Aplikacja”), w tym z trybu gry online, czatu pomiędzy graczami oraz funkcji podglądu kamery i audio podczas rozgrywki.
+Właścicielem i administratorem Aplikacji jest osoba prywatna, kontakt: [TWÓJ ADRES E-MAIL] (dalej: „Administrator”).
+Korzystanie z Aplikacji jest bezpłatne i dobrowolne. Aplikacja nie oferuje płatnych funkcji, zakupów w aplikacji ani reklam.
+Rozpoczęcie korzystania z Aplikacji (w szczególności założenie konta lub dołączenie do gry online) oznacza akceptację niniejszego Regulaminu.
+
+
+§2. Konto i rejestracja
+
+
+Korzystanie z trybu online wymaga założenia konta przy użyciu adresu e-mail.
+Użytkownik zobowiązuje się podać prawdziwe dane przy rejestracji oraz nie udostępniać swojego konta osobom trzecim.
+Administrator zastrzega sobie prawo do zablokowania lub usunięcia konta w przypadku naruszenia niniejszego Regulaminu.
+Osoby niepełnoletnie mogą korzystać z Aplikacji wyłącznie za wiedzą i zgodą rodzica lub opiekuna prawnego, który ponosi odpowiedzialność za nadzór nad korzystaniem z Aplikacji przez dziecko, w tym za korzystanie z funkcji czatu, kamery i mikrofonu.
+
+
+§3. Tryb online i rozgrywka
+
+
+Aplikacja umożliwia rozgrywkę online z innymi Użytkownikami w ramach wirtualnych pokoi (rooms).
+Administrator nie gwarantuje nieprzerwanej dostępności trybu online — funkcjonalność ta zależy od zewnętrznej infrastruktury (Firebase/Google) i może być okresowo niedostępna.
+Wyniki rozgrywek, statystyki oraz inne dane gry mogą być przechowywane na serwerach w celu zapewnienia funkcjonalności Aplikacji (np. rewanże, podgląd przeciwnika).
+
+
+§4. Czat, kamera i mikrofon — zasady korzystania
+
+
+Aplikacja umożliwia komunikację tekstową (czat globalny oraz czat pokoju/z rywalem), a także — w wybranych trybach — podgląd obrazu z kamery i/lub dźwięku z mikrofonu przeciwnika.
+Korzystając z czatu, kamery lub mikrofonu, Użytkownik zobowiązuje się do:
+
+nieużywania wulgaryzmów, mowy nienawiści, treści obraźliwych, dyskryminujących lub poniżających innych Użytkowników;
+nieprzesyłania treści o charakterze erotycznym, przemocowym, niezgodnym z prawem lub naruszającym prawa osób trzecich;
+nieujawniania na czacie danych osobowych innych osób (np. adresów, numerów telefonów) bez ich zgody;
+niewykorzystywania funkcji kamery/mikrofonu do nagrywania, rejestrowania lub rozpowszechniania wizerunku bądź głosu innych Użytkowników bez ich zgody;
+niewykorzystywania Aplikacji do nękania, zastraszania, grooming-u lub innych form niewłaściwego kontaktu z innymi Użytkownikami, w szczególności z osobami niepełnoletnimi.
+
+
+
+Wiadomości na czacie mogą podlegać automatycznemu filtrowi treści wulgarnych. Filtr ma charakter pomocniczy i nie gwarantuje wykrycia wszystkich niedozwolonych treści — odpowiedzialność za treść wysyłanych wiadomości spoczywa wyłącznie na Użytkowniku.
+Administrator zastrzega sobie prawo do: usuwania wiadomości naruszających Regulamin, czasowego lub stałego zablokowania możliwości korzystania z czatu/kamery/mikrofonu danemu Użytkownikowi, a w poważnych przypadkach — do zablokowania konta.
+Rodziców i opiekunów osób niepełnoletnich korzystających z Aplikacji zachęca się do nadzorowania korzystania z funkcji komunikacyjnych (czat, kamera, mikrofon) oraz do zgłaszania Administratorowi wszelkich niepokojących sytuacji pod adresem podanym w §1.
+
+
+§5. Zgłaszanie naruszeń
+
+
+Każdy Użytkownik, który zauważy naruszenie Regulaminu przez innego Użytkownika (np. wulgarne treści, niewłaściwe zachowanie, podejrzane działania wobec osoby niepełnoletniej), może zgłosić to Administratorowi pod adresem e-mail wskazanym w §1.
+Zgłoszenia dotyczące bezpieczeństwa dzieci traktowane są priorytetowo i mogą skutkować natychmiastowym zablokowaniem konta osoby zgłoszonej, niezależnie od dalszego postępowania wyjaśniającego.
+
+
+§6. Dane osobowe i prywatność
+
+
+Administrator przetwarza dane Użytkowników (adres e-mail, nick, treść wiadomości na czacie, dane o rozgrywkach) wyłącznie w celu świadczenia funkcjonalności Aplikacji.
+Dane przechowywane są przy użyciu usług Google Firebase. Szczegółowe informacje o przetwarzaniu danych osobowych znajdują się w odrębnej Polityce Prywatności [LINK / DO UZUPEŁNIENIA].
+Obraz z kamery i dźwięk z mikrofonu (jeśli funkcja jest używana) są przesyłane wyłącznie pomiędzy Użytkownikami uczestniczącymi w danej rozgrywce i — o ile Aplikacja nie wskazuje inaczej — nie są trwale zapisywane przez Administratora.
+Użytkownik może w każdej chwili zażądać usunięcia swojego konta i powiązanych danych, kontaktując się z Administratorem.
+
+
+§7. Odpowiedzialność
+
+
+Aplikacja jest udostępniana „tak jak jest” (as-is), bez gwarancji nieprzerwanego i bezbłędnego działania.
+Administrator nie ponosi odpowiedzialności za treści publikowane przez Użytkowników na czacie ani za ich zachowanie podczas rozgrywek online, jednak podejmuje działania moderacyjne opisane w §4–5.
+Administrator nie ponosi odpowiedzialności za szkody wynikające z niewłaściwego korzystania z Aplikacji przez Użytkownika lub osoby trzecie.
+
+
+§8. Zmiany Regulaminu
+
+
+Administrator zastrzega sobie prawo do zmiany Regulaminu w dowolnym czasie.
+O istotnych zmianach Użytkownicy zostaną poinformowani w Aplikacji lub poprzez wiadomość e-mail.
+Dalsze korzystanie z Aplikacji po wprowadzeniu zmian oznacza ich akceptację.
+
+
+§9. Postanowienia końcowe
+
+
+W sprawach nieuregulowanych niniejszym Regulaminem zastosowanie mają przepisy prawa polskiego.
+Kontakt z Administratorem: specuart@gmail.com</div>
+    </div>
+
   </div>
 </section>
 
