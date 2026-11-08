@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="DartsMaster Pro — darmowa aplikacja do gry w darta. 501, 301, Cricket, ATC. Multiplayer online, kamera rywala, statystyki.">
+<meta name="description" content="DartsMaster Pro — darmowa aplikacja do gry w darta z auto-liczeniem przez kamerę telefonu. 501, 301, Cricket, Killer, Halve-It, Shanghai, Bob's 27. Multiplayer online, ranking ELO, statystyki.">
 <meta property="og:title" content="DartsMaster Pro">
-<meta property="og:description" content="Profesjonalna aplikacja dart — graj lokalnie lub online, śledź statystyki, oglądaj rzuty rywala na żywo.">
+<meta property="og:description" content="Postaw telefon na statywie — aplikacja sama liczy punkty. Graj lokalnie lub online, ranking ELO, statystyki, rzuty rywala na żywo.">
 <meta name="theme-color" content="#0a0a0f">
 <link rel="manifest" href="/manifest.json">
 <link rel="apple-touch-icon" href="/icon-192.png">
@@ -192,6 +192,68 @@ footer{background:var(--surface);border-top:1px solid var(--border);padding:28px
 }@media(prefers-reduced-motion:reduce){
   *{animation:none!important;transition:none!important}
 }
+
+/* ===== NOWOŚCI 2026 ===== */
+.new-badge{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2px;color:#000;background:var(--green);padding:3px 8px;border-radius:4px;margin-left:8px;vertical-align:middle}
+.feat-card.is-new{border-color:rgba(0,255,136,.35)}
+.feat-card.is-new .feat-title::after{content:'NOWOŚĆ';font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1.5px;color:#000;background:var(--green);padding:2px 6px;border-radius:3px;margin-left:8px;vertical-align:middle}
+.cam-section{padding:90px 24px;position:relative;z-index:1;border-top:1px solid var(--border)}
+.cam-wrap{max-width:980px;margin:0 auto}
+.cam-hero{display:grid;grid-template-columns:1.1fr .9fr;gap:36px;align-items:center;margin-bottom:56px}
+.cam-points{list-style:none;margin-top:18px}
+.cam-points li{display:flex;gap:12px;align-items:flex-start;margin-bottom:12px;font-size:15px;color:var(--text);line-height:1.5}
+.cam-points li b{color:var(--cyan);font-weight:600}
+.cam-points li span.i{font-size:20px;line-height:1.2;flex-shrink:0}
+.cam-phone{background:#000;border:2px solid var(--cyan);border-radius:26px;padding:10px;max-width:290px;margin:0 auto;box-shadow:0 0 40px rgba(0,229,255,.18)}
+.cam-screen{background:#0a0a0f;border-radius:18px;overflow:hidden}
+.cam-top{display:flex;justify-content:space-between;padding:8px 12px;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1px}
+.cam-top b{color:var(--red);font-weight:500}
+.cam-view{aspect-ratio:4/3;background:radial-gradient(circle at 50% 50%,#1b1b22 0,#0d0d12 70%);display:flex;align-items:center;justify-content:center;position:relative}
+.cam-bottom{padding:10px 12px 14px;text-align:center}
+.cam-big{font-family:'Bebas Neue',cursive;font-size:64px;line-height:1;color:var(--cyan);text-shadow:0 0 20px rgba(0,229,255,.45)}
+.cam-darts{display:flex;justify-content:center;gap:16px;margin-top:6px;font-family:'Bebas Neue',cursive;font-size:20px;letter-spacing:1px}
+.cam-sub{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);margin-top:6px;letter-spacing:1px}
+.cam-h3{font-family:'Bebas Neue',cursive;font-size:30px;letter-spacing:2px;color:var(--text);margin:54px 0 18px;display:flex;align-items:center;gap:12px}
+.cam-h3 .n{font-size:16px;color:#000;background:var(--cyan);border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
+.setup-grid{display:grid;grid-template-columns:1fr 1fr;gap:28px;align-items:start}
+.setup-diagram{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px}
+.setup-diagram svg{width:100%;height:auto;display:block}
+.setup-cap{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);text-align:center;margin-top:8px;letter-spacing:1px}
+.rules{display:grid;gap:10px}
+.rule{display:flex;gap:12px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;align-items:flex-start}
+.rule .ri{font-size:22px;line-height:1;flex-shrink:0;width:28px;text-align:center}
+.rule .rt{font-weight:700;font-size:15px;color:var(--text);margin-bottom:2px}
+.rule .rd{font-size:14px;color:var(--muted);line-height:1.55}
+.rule.ok{border-left:3px solid var(--green)}.rule.no{border-left:3px solid var(--red)}.rule.tip{border-left:3px solid var(--gold)}
+.steps-list{counter-reset:s;display:grid;gap:10px}
+.step{display:flex;gap:14px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px}
+.step::before{counter-increment:s;content:counter(s);font-family:'Bebas Neue',cursive;font-size:26px;color:var(--cyan);line-height:1;min-width:22px}
+.step b{color:var(--text)}
+.step p{font-size:14px;color:var(--muted);line-height:1.6}
+.step p strong{color:var(--text);font-weight:600}
+.cols3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.mini{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px}
+.mini .mi{font-size:26px;margin-bottom:6px}
+.mini .mt{font-family:'Bebas Neue',cursive;font-size:20px;letter-spacing:1px;color:var(--text);margin-bottom:4px}
+.mini .md{font-size:13.5px;color:var(--muted);line-height:1.55}
+.legend{display:flex;flex-wrap:wrap;gap:14px;margin:6px 0 4px;font-size:13px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:12px;height:12px;border-radius:50%;display:inline-block}
+.games-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;max-width:1100px;margin:36px auto 0}
+.game-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;position:relative;overflow:hidden}
+.game-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--red),var(--gold))}
+.game-card .gi{font-size:30px}
+.game-card .gt{font-family:'Bebas Neue',cursive;font-size:26px;letter-spacing:1.5px;color:var(--text);margin:6px 0 2px}
+.game-card .gs{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;color:var(--gold);margin-bottom:10px}
+.game-card p{font-size:14px;color:var(--muted);line-height:1.6}
+.callout{background:linear-gradient(135deg,rgba(0,229,255,.08),rgba(0,255,136,.05));border:1px solid rgba(0,229,255,.3);border-radius:14px;padding:18px 20px;margin-top:22px;font-size:14.5px;line-height:1.65;color:var(--text)}
+.callout b{color:var(--cyan)}
+@media(max-width:760px){
+  .cam-hero,.setup-grid{grid-template-columns:1fr}
+  .cols3{grid-template-columns:1fr}
+  .cam-section{padding:70px 18px}
+  .cam-h3{font-size:25px}
+}
 </style>
 </head>
 <body>
@@ -202,7 +264,7 @@ footer{background:var(--surface);border-top:1px solid var(--border);padding:28px
   <div style="display:flex;gap:8px;align-items:center">
     <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;background:transparent;border:1px solid var(--cyan);color:var(--cyan);font-family:'Bebas Neue',cursive;font-size:14px;letter-spacing:1.5px;padding:7px 16px;border-radius:6px;cursor:pointer;transition:all .2s" onmouseover="this.style.background='rgba(0,229,255,.1)'" onmouseout="this.style.background='transparent'">⬇ Zainstaluj</button>
     <a href="https://dartsmasterpro.vercel.app/" target="_blank" rel="noopener" style="background:transparent;border:1px solid var(--green);color:var(--green);font-family:'Bebas Neue',cursive;font-size:14px;letter-spacing:1.5px;padding:7px 16px;border-radius:6px;text-decoration:none;transition:all .2s" onmouseover="this.style.background='rgba(0,255,136,.1)'" onmouseout="this.style.background='transparent'">🌐 Graj / Instaluj</a>
-    <a href="app.html" download class="nav-dl">↓ Pobierz</a>
+    <a href="DartsMasterPro.html" download="DartsMasterPro.html" class="nav-dl">↓ Pobierz</a>
   </div>
 </nav>
 
@@ -238,10 +300,10 @@ footer{background:var(--surface);border-top:1px solid var(--border);padding:28px
     <span class="t-dim">Stworzona z pasji do gry.</span>
   </h1>
   <p class="hero-sub">
-    Jeden plik HTML. <strong>Zero reklam.</strong> Otwórz w przeglądarce i graj — lokalnie z przyjaciółmi albo <strong>online</strong>.
+    <strong>Nowość: auto-kamera</strong> — postaw telefon na statywie, a aplikacja sama rozpozna lotki i policzy punkty. <strong>Zero reklam.</strong> Graj lokalnie z przyjaciółmi albo <strong>online</strong>.
   </p>
   <div class="hero-cta-group">
-    <a href="app.html" download class="btn-primary">
+    <a href="DartsMasterPro.html" download="DartsMasterPro.html" class="btn-primary">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
       Pobierz aplikację
     </a>
@@ -249,7 +311,7 @@ footer{background:var(--surface);border-top:1px solid var(--border);padding:28px
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
       Graj / Instaluj
     </a>
-    <a href="#jak-zaczac" class="btn-secondary">Jak zacząć →</a>
+    <a href="#kamera" class="btn-secondary">📷 Jak działa auto-kamera →</a>
   </div>
   <p class="hero-note"><span>✓</span> Bezpłatna na zawsze &nbsp;·&nbsp; <span>✓</span> Działa offline &nbsp;·&nbsp; <span>✓</span> Brak reklam</p>
 
@@ -261,9 +323,10 @@ footer{background:var(--surface);border-top:1px solid var(--border);padding:28px
 
 <!-- STATS BAR -->
 <div class="stats-bar">
-  <div class="stat-item"><div class="stat-num">4</div><div class="stat-lbl">tryby gry</div></div>
-  <div class="stat-item"><div class="stat-num">4</div><div class="stat-lbl">graczy lokalnie</div></div>
+  <div class="stat-item"><div class="stat-num">9</div><div class="stat-lbl">trybów gry</div></div>
   <div class="stat-item"><div class="stat-num">8</div><div class="stat-lbl">ćwiczeń</div></div>
+  <div class="stat-item"><div class="stat-num">📷</div><div class="stat-lbl">auto-liczenie</div></div>
+  <div class="stat-item"><div class="stat-num">ELO</div><div class="stat-lbl">ranking online</div></div>
   </div>
   
 </div>
@@ -273,21 +336,56 @@ footer{background:var(--surface);border-top:1px solid var(--border);padding:28px
   <div class="centered">
     <div class="section-eyebrow">Co oferuje</div>
     <h2 class="section-title">Wszystko, czego<br>potrzebuje dartowiec 🍺</h2>
-    <p class="section-sub">Od szybkiej gry w 501 po turnieje online — DartsMaster Pro oferuje każdy możliwy scenariusz rozgrywki, posiada dwa tryby liczenia. Klasyczny ( po lotce ) oraz sumaryczny. Trenuj. Rywalizuj. Graj Fair play!</p>
+    <p class="section-sub">Od szybkiej gry w 501 po turnieje online — DartsMaster Pro oferuje każdy możliwy scenariusz rozgrywki i trzy sposoby liczenia: klasyczny (po lotce), sumaryczny oraz <strong style="color:var(--cyan)">automatyczny z kamery</strong>. Trenuj. Rywalizuj. Graj fair play!</p>
   </div>
   <div class="features-grid">
+
+    <div class="feat-card is-new">
+      <span class="feat-icon">🤖</span>
+      <div class="feat-title">Auto-kamera</div>
+      <p class="feat-desc">Telefon na statywie rozpoznaje wbite lotki i sam wpisuje punkty. Lektor wywołuje każdą lotkę, a aplikacja uczy się z Twoich poprawek. <a href="#kamera" style="color:var(--cyan)">Jak to ustawić →</a></p>
+      <span class="feat-tag tag-cyan">Auto-liczenie · 1 telefon</span>
+    </div>
+
+    <div class="feat-card is-new">
+      <span class="feat-icon">🏆</span>
+      <div class="feat-title">Ranking ELO</div>
+      <p class="feat-desc">Każdy mecz online 1 na 1 zmienia Twoje ELO — wygrana z mocniejszym daje więcej. Poziomy od 🥉 Brązu do 👑 Mistrza, wykres ELO i ostatnie mecze w profilu gracza.</p>
+      <span class="feat-tag tag-gold">Ranking · Profil</span>
+    </div>
+
+    <div class="feat-card is-new">
+      <span class="feat-icon">📈</span>
+      <div class="feat-title">Wykres formy i mapa trafień</div>
+      <p class="feat-desc">Średnia, checkout % i skupienie dzień po dniu z linią trendu. Mapa trafień pokazuje, gdzie naprawdę lądują Twoje lotki przy T20, T19 i doublach — i w którą stronę uciekają.</p>
+      <span class="feat-tag tag-green">Postęp · Skupienie</span>
+    </div>
+
+    <div class="feat-card is-new">
+      <span class="feat-icon">📊</span>
+      <div class="feat-title">Statystyki meczu</div>
+      <p class="feat-desc">Po meczu online jednym przyciskiem: Twoje i rywala średnie, najwyższy checkout, 180-tki, 140+, 100+, najlepszy leg, rzucone lotki i przebieg każdego legu.</p>
+      <span class="feat-tag tag-red">Ty vs rywal</span>
+    </div>
+
+    <div class="feat-card is-new">
+      <span class="feat-icon">📨</span>
+      <div class="feat-title">Zaproszenia do gry</div>
+      <p class="feat-desc">Zaproś znajomego po nicku albo z listy ostatnich rywali. Dostanie powiadomienie i dołączy do pokoju jednym dotknięciem — nawet gdy aplikacja jest zamknięta.</p>
+      <span class="feat-tag tag-cyan">Push · 1 klik</span>
+    </div>
 
     <div class="feat-card">
       <span class="feat-icon">🎯</span>
       <div class="feat-title">Tryby gry</div>
-      <p class="feat-desc">501, 301 z opcją Double-In / Double-Out, Cricket z pełną synchronizacją, Around The Clock — wszystkie tryby dostępne lokalnie dla 1–4 graczy.</p>
-      <span class="feat-tag tag-red">501 · 301 · Cricket · ATC</span>
+      <p class="feat-desc">501, 301 z opcją Double-In / Double-Out, Cricket, Around The Clock, a teraz także <strong>Killer, Halve-It, Shanghai, Bob's 27 i 121 Checkout</strong> — dla 1–4 graczy. <a href="#gry" style="color:var(--cyan)">Zasady →</a></p>
+      <span class="feat-tag tag-red">9 trybów · 1–4 graczy</span>
     </div>
 
     <div class="feat-card">
       <span class="feat-icon">🌐</span>
       <div class="feat-title">Multiplayer Online</div>
-      <p class="feat-desc">Twórz pokoje i graj w czasie rzeczywistym. Ranking globalny, historia meczów i streak wygranych — wszystko zsynchronizowane przez Firebase.</p>
+      <p class="feat-desc">Twórz pokoje i graj w czasie rzeczywistym. Ranking ELO, historia meczów, streak wygranych i statystyki całego meczu — wszystko zsynchronizowane przez Firebase.</p>
       <span class="feat-tag tag-cyan">Realtime · Ranking</span>
     </div>
 
@@ -345,6 +443,128 @@ footer{background:var(--surface);border-top:1px solid var(--border);padding:28px
   </div>
 </section>
 
+
+<!-- AUTO-KAMERA -->
+<section class="cam-section" id="kamera">
+ <div class="cam-wrap">
+  <div class="cam-hero">
+   <div>
+    <div class="section-eyebrow">Nowość · Auto-liczenie</div>
+    <h2 class="section-title">Postaw telefon.<br>Rzucaj. Aplikacja liczy.</h2>
+    <p class="section-sub" style="margin-bottom:0">Auto-kamera rozpoznaje wbite lotki i sama wpisuje punkty — jak elektroniczna tarcza, tylko na Twojej zwykłej tarczy sizalowej i <strong>jednym telefonie</strong>. Bez dodatkowego sprzętu, bez opłat, bez wysyłania obrazu do żadnej chmury.</p>
+    <ul class="cam-points">
+     <li><span class="i">🎯</span><div>Rozpoznaje <b>pole, mnożnik i grot</b> każdej lotki — single, double, treble, 25, bull i pudło.</div></li>
+     <li><span class="i">🗣️</span><div><b>Lektor</b> wywołuje każdą lotkę i sumę tury, jak sędzia na turnieju.</div></li>
+     <li><span class="i">🧠</span><div><b>Uczy się</b> z Twoich poprawek — z każdą sesją myli się rzadziej.</div></li>
+     <li><span class="i">🌐</span><div>Działa <b>online</b> — rywal na swoim telefonie widzi Twoją tarczę i lotki na żywo.</div></li>
+     <li><span class="i">↩️</span><div>Wyjmujesz lotki — tura <b>zatwierdza się sama</b>, kolejka przechodzi dalej.</div></li>
+    </ul>
+   </div>
+   <div class="cam-phone" aria-hidden="true">
+    <div class="cam-screen">
+     <div class="cam-top"><span><b>●</b> KAMERA · NA ŻYWO</span><span>501 · R4</span></div>
+     <div class="cam-view"><svg viewBox="0 0 200 200" width="190" height="190" aria-hidden="true"><defs><clipPath id="cb"><circle cx="100" cy="100" r="92"/></clipPath></defs>
+<circle cx="100" cy="100" r="96" fill="#111"/>
+<g clip-path="url(#cb)"><path d="M100,100 L85.6,9.1 A92,92 0 0,1 114.4,9.1 Z" fill="#1b1b1b"/><path d="M100,100 L114.4,9.1 A92,92 0 0,1 141.8,18.0 Z" fill="#e8e0cc"/><path d="M100,100 L141.8,18.0 A92,92 0 0,1 165.1,34.9 Z" fill="#1b1b1b"/><path d="M100,100 L165.1,34.9 A92,92 0 0,1 182.0,58.2 Z" fill="#e8e0cc"/><path d="M100,100 L182.0,58.2 A92,92 0 0,1 190.9,85.6 Z" fill="#1b1b1b"/><path d="M100,100 L190.9,85.6 A92,92 0 0,1 190.9,114.4 Z" fill="#e8e0cc"/><path d="M100,100 L190.9,114.4 A92,92 0 0,1 182.0,141.8 Z" fill="#1b1b1b"/><path d="M100,100 L182.0,141.8 A92,92 0 0,1 165.1,165.1 Z" fill="#e8e0cc"/><path d="M100,100 L165.1,165.1 A92,92 0 0,1 141.8,182.0 Z" fill="#1b1b1b"/><path d="M100,100 L141.8,182.0 A92,92 0 0,1 114.4,190.9 Z" fill="#e8e0cc"/><path d="M100,100 L114.4,190.9 A92,92 0 0,1 85.6,190.9 Z" fill="#1b1b1b"/><path d="M100,100 L85.6,190.9 A92,92 0 0,1 58.2,182.0 Z" fill="#e8e0cc"/><path d="M100,100 L58.2,182.0 A92,92 0 0,1 34.9,165.1 Z" fill="#1b1b1b"/><path d="M100,100 L34.9,165.1 A92,92 0 0,1 18.0,141.8 Z" fill="#e8e0cc"/><path d="M100,100 L18.0,141.8 A92,92 0 0,1 9.1,114.4 Z" fill="#1b1b1b"/><path d="M100,100 L9.1,114.4 A92,92 0 0,1 9.1,85.6 Z" fill="#e8e0cc"/><path d="M100,100 L9.1,85.6 A92,92 0 0,1 18.0,58.2 Z" fill="#1b1b1b"/><path d="M100,100 L18.0,58.2 A92,92 0 0,1 34.9,34.9 Z" fill="#e8e0cc"/><path d="M100,100 L34.9,34.9 A92,92 0 0,1 58.2,18.0 Z" fill="#1b1b1b"/><path d="M100,100 L58.2,18.0 A92,92 0 0,1 85.6,9.1 Z" fill="#e8e0cc"/>
+<circle cx="100" cy="100" r="88" fill="none" stroke="#1f7a4c" stroke-width="7" stroke-dasharray="14.4 14.4"/><circle cx="100" cy="100" r="88" fill="none" stroke="#c8102e" stroke-width="7" stroke-dasharray="14.4 14.4" stroke-dashoffset="14.4"/>
+<circle cx="100" cy="100" r="54" fill="none" stroke="#1f7a4c" stroke-width="5" stroke-dasharray="8.8 8.8"/><circle cx="100" cy="100" r="54" fill="none" stroke="#c8102e" stroke-width="5" stroke-dasharray="8.8 8.8" stroke-dashoffset="8.8"/>
+<circle cx="100" cy="100" r="9" fill="#1f7a4c"/><circle cx="100" cy="100" r="4" fill="#c8102e"/></g>
+<g stroke="#00e5ff" stroke-width="1" fill="none" opacity=".75"><circle cx="100" cy="100" r="92"/><circle cx="100" cy="100" r="57"/><circle cx="100" cy="100" r="51"/></g>
+<line x1="132" y1="40" x2="104" y2="47" stroke="#ccc" stroke-width="3" stroke-linecap="round"/><path d="M132,40 l14,-9 l3,10 z" fill="#ff3cac"/>
+<circle cx="103" cy="47" r="5" fill="none" stroke="#00ff88" stroke-width="2"/>
+<line x1="70" y1="150" x2="88" y2="128" stroke="#ccc" stroke-width="3" stroke-linecap="round"/><path d="M70,150 l-13,5 l3,-12 z" fill="#ff3cac"/>
+<circle cx="89" cy="127" r="5" fill="none" stroke="#00ff88" stroke-width="2"/>
+</svg></div>
+     <div class="cam-bottom">
+      <div class="cam-big">141</div>
+      <div class="cam-darts"><span style="color:#00ff88">T20</span><span style="color:#00ff88">T20</span><span style="color:#2a2a40">—</span></div>
+      <div class="cam-sub">🎯 T20 · T19 · D12</div>
+     </div>
+    </div>
+   </div>
+  </div>
+
+  <h3 class="cam-h3"><span class="n">1</span>Jak ustawić telefon</h3>
+  <div class="setup-grid">
+   <div class="setup-diagram"><svg viewBox="0 0 360 300" role="img" aria-label="Widok z góry: tarcza na ścianie, telefon z boku pod kątem 30–50 stopni, 50–80 cm od tarczy">
+<rect x="20" y="18" width="320" height="10" fill="#2a2a40"/><text x="180" y="14" text-anchor="middle" fill="#8888aa" font-family="JetBrains Mono" font-size="9" letter-spacing="2">ŚCIANA</text>
+<rect x="140" y="28" width="80" height="12" rx="3" fill="#c8102e"/><text x="180" y="54" text-anchor="middle" fill="#e8e8f0" font-family="Bebas Neue" font-size="15" letter-spacing="1">TARCZA</text>
+<path d="M180,40 L64,190 A170,170 0 0,0 112,214 Z" fill="rgba(0,255,136,.12)" stroke="rgba(0,255,136,.5)" stroke-dasharray="4 3"/>
+<path d="M180,40 L296,190 A170,170 0 0,1 248,214 Z" fill="rgba(0,255,136,.12)" stroke="rgba(0,255,136,.5)" stroke-dasharray="4 3"/>
+<path d="M180,40 L160,230 L200,230 Z" fill="rgba(255,60,60,.12)" stroke="rgba(255,60,60,.5)" stroke-dasharray="4 3"/>
+<text x="180" y="248" text-anchor="middle" fill="#ff3c3c" font-family="JetBrains Mono" font-size="9">✗ na wprost — lotka zasłania grot</text>
+<text x="70" y="168" fill="#00ff88" font-family="Bebas Neue" font-size="16" letter-spacing="1">30–50°</text>
+<text x="262" y="168" fill="#00ff88" font-family="Bebas Neue" font-size="16" letter-spacing="1">30–50°</text>
+<g transform="translate(86,200) rotate(-38)"><rect x="-9" y="-16" width="18" height="32" rx="4" fill="#0a0a0f" stroke="#00e5ff" stroke-width="2"/><circle cx="0" cy="-10" r="2.5" fill="#00e5ff"/></g>
+<line x1="98" y1="186" x2="174" y2="48" stroke="#00e5ff" stroke-width="1" stroke-dasharray="3 3"/>
+<text x="118" y="122" fill="#00e5ff" font-family="JetBrains Mono" font-size="9" transform="rotate(-61 118 122)">50–80 cm</text>
+<line x1="20" y1="282" x2="340" y2="282" stroke="#ffd700" stroke-width="2"/><text x="180" y="276" text-anchor="middle" fill="#ffd700" font-family="JetBrains Mono" font-size="9" letter-spacing="1">LINIA RZUTU · 2,37 m</text>
+<text x="84" y="236" text-anchor="middle" fill="#e8e8f0" font-family="JetBrains Mono" font-size="9">📱 telefon</text>
+</svg><div class="setup-cap">WIDOK Z GÓRY</div></div>
+   <div class="rules">
+    <div class="rule ok"><div class="ri">📐</div><div><div class="rt">Z boku, pod kątem 30–50°</div><div class="rd">Telefon stoi z lewej albo prawej strony tarczy. Ustawiony na wprost widzi lotkę „od tyłu” — korpus lotki zasłania grot i trafienia przy drutach są mniej pewne.</div></div></div>
+    <div class="rule ok"><div class="ri">📏</div><div><div class="rt">50–80 cm od tarczy</div><div class="rd">Cała tarcza musi być w kadrze, razem z pierścieniem doubli, i wypełniać jak największą część obrazu. Im większa tarcza na ekranie, tym dokładniej.</div></div></div>
+    <div class="rule ok"><div class="ri">↕️</div><div><div class="rt">Na wysokości bulla lub trochę niżej</div><div class="rd">Około 1,4–1,7 m od podłogi. Środek tarczy wypada na wysokości 1,73 m.</div></div></div>
+    <div class="rule ok"><div class="ri">💡</div><div><div class="rt">Równe światło z przodu lub z góry</div><div class="rd">Najlepiej ring LED albo oświetlenie tarczy. Bez lampy za tarczą i bez okna w kadrze — przeciwświatło i migające żarówki to najczęstsza przyczyna błędów.</div></div></div>
+    <div class="rule no"><div class="ri">🚫</div><div><div class="rt">Statyw nie może dotykać ściany ani tarczy</div><div class="rd">Każde uderzenie lotki przeniesie się na telefon. Postaw statyw osobno i tak, żeby nikt go nie potrącił.</div></div></div>
+    <div class="rule tip"><div class="ri">🔒</div><div><div class="rt">Po ustawieniu — nie ruszaj telefonu</div><div class="rd">Aplikacja sama koryguje drobne przesunięcia, ale każde poruszenie statywu to kilka sekund, zanim siatka znów idealnie pasuje.</div></div></div>
+   </div>
+  </div>
+  <div class="callout">📐 <b>Asystent ustawienia</b> pomoże Ci przy pierwszym uruchomieniu: pokazuje na żywo, czy tarcza jest w kadrze, czy jest dobrze oświetlona i pod jakim kątem patrzy kamera. Ustaw telefon tak, żeby wszystkie wskaźniki zrobiły się zielone — i gotowe.</div>
+
+  <h3 class="cam-h3"><span class="n">2</span>Pierwsze uruchomienie</h3>
+  <div class="steps-list">
+   <div class="step"><p><strong>Rozpocznij grę</strong> (np. 501) i dotknij przycisku <strong>📷 TRYB KAMERY (AUTO-LICZENIE)</strong> nad klawiaturą. Zezwól przeglądarce na dostęp do kamery.</p></div>
+   <div class="step"><p><strong>Zostaw tarczę pustą</strong> na kilka sekund. Aplikacja sama ustawia jasność i ostrość, a potem <strong>automatycznie kalibruje</strong> tarczę — dopasowuje niebieską siatkę do pól. Zobaczysz komunikat „Tarcza czysta — rzucaj 🎯”.</p></div>
+   <div class="step"><p><strong>Sprawdź siatkę.</strong> Niebieskie linie powinny leżeć na drutach tarczy. Jeśli coś się nie zgadza — dotknij <strong>🎯 KALIBRUJ</strong> i kliknij <strong>🤖 AUTO</strong> albo przesuń 4 punkty na zewnętrzną krawędź doubli (z lupą i strzałkami do precyzyjnego ustawienia).</p></div>
+   <div class="step"><p><strong>Rzucaj normalnie.</strong> Każda lotka pojawia się na ekranie z kolorem i wartością, lektor ją wywołuje. Po trzeciej lotce podejdź i wyjmij lotki — tura zatwierdzi się sama, a lektor poda sumę.</p></div>
+  </div>
+
+  <h3 class="cam-h3"><span class="n">3</span>W trakcie gry</h3>
+  <div class="cols3">
+   <div class="mini"><div class="mi">🟢</div><div class="mt">Kolory lotek</div><div class="md">Na obrazie widzisz każdą wykrytą lotkę z zaznaczonym grotem. Lotka oznaczona jako <b style="color:var(--gold)">niepewna</b> (grot tuż przy drucie) ma obok podpowiedź drugiego pola — np. „T20 / 20”.</div></div>
+   <div class="mini"><div class="mi">✏️</div><div class="mt">Poprawianie</div><div class="md">Kamera się pomyliła? <b>Stuknij lotkę</b> pod obrazem i wybierz pole z pełnej klawiatury (wszystkie single, double, treble, 25, bull, pudło) — albo <b>stuknij w obraz</b> dokładnie w miejscu grota.</div></div>
+   <div class="mini"><div class="mi">➕</div><div class="mt">Brakująca lotka</div><div class="md">Jeśli kamera nie zauważyła lotki, stuknij w obraz w miejscu, gdzie się wbiła — zostanie dodana. Przycisk <b>NASTĘPNA RUNDA</b> zamyka turę ręcznie, a <b>✋ WYJĘTE</b> mówi aplikacji, że lotki są już wyjęte.</div></div>
+   <div class="mini"><div class="mi">↘️</div><div class="mt">Odbicie i wypadnięcie</div><div class="md">Lotka odbiła się od tarczy? Nic nie zostanie zaliczone. Jeśli kolejna lotka wybije poprzednią, aplikacja wykryje, że tamta wypadła, i <b>odejmie jej punkty</b> („Bounce out”).</div></div>
+   <div class="mini"><div class="mi">⚠️</div><div class="mt">BUST i koniec legu</div><div class="md">Przy przebiciu albo zejściu tura <b>nie zatwierdza się sama</b> — masz czas sprawdzić lotki i poprawić błędny odczyt. Potem wyjmij lotki albo kliknij <b>✓ ZATWIERDŹ</b>.</div></div>
+   <div class="mini"><div class="mi">🧠</div><div class="mt">Nauka z poprawek</div><div class="md">Każda Twoja poprawka uczy aplikację, jak kamera widzi Twoją tarczę z tej pozycji. Po kilkunastu rzutach błędy przy drutach pojawiają się wyraźnie rzadziej.</div></div>
+  </div>
+  <div class="callout">🔄 <b>Kalibracja w tle.</b> Statyw osiada, telefon się nagrzewa, ktoś potrąci stolik — aplikacja po wyjęciu lotek i przy każdym „drgnięciu” obrazu sprawdza, czy siatka dalej pasuje do tarczy, i sama ją poprawia. Zmienia ją tylko wtedy, gdy nowa pasuje wyraźnie lepiej.</div>
+
+  <h3 class="cam-h3"><span class="n">4</span>Z kamerą online</h3>
+  <div class="cols3">
+   <div class="mini"><div class="mi">👀</div><div class="mt">Rywal widzi Twoje rzuty</div><div class="md">Gdy Ty rzucasz, przeciwnik na swoim telefonie widzi obraz Twojej tarczy i zaznaczone lotki na żywo — i odwrotnie. Koniec z wątpliwościami co do punktacji.</div></div>
+   <div class="mini"><div class="mi">🎯</div><div class="mt">Rzut do bulla</div><div class="md">Jeśli obaj wybierzecie w pokoju <b>📷 GRAM Z KAMERĄ</b>, o tym, kto zaczyna, decyduje jedna lotka w bulla — kto bliżej środka (w milimetrach), ten zaczyna. Obaj widzicie zdjęcia obu tarcz.</div></div>
+   <div class="mini"><div class="mi">🎲</div><div class="mt">Bez kamery</div><div class="md">Gdy choć jeden gracz gra ręcznie, kolejność ustala rzut kostką — jak dotąd.</div></div>
+  </div>
+
+  <h3 class="cam-h3"><span class="n">5</span>Gdy coś nie działa</h3>
+  <div class="rules">
+   <div class="rule tip"><div class="ri">❓</div><div><div class="rt">Lotki nie są wykrywane</div><div class="rd">Sprawdź światło (komunikat „Za ciemno”), czy cała tarcza jest w kadrze i czy w ⚙️ OPCJE suwak <b>Czułość</b> nie jest ustawiony za wysoko — domyślnie 40 (wyższa wartość = kamera mniej czuła). Zbyt wysoka wartość „ucina” cienki grot.</div></div></div>
+   <div class="rule tip"><div class="ri">🎲</div><div><div class="rt">Pojawiają się lotki, których nie rzuciłeś</div><div class="rd">Najczęściej to migające światło albo cień poruszającej się osoby. Zmień oświetlenie na stałe (LED bez migotania) albo delikatnie przesuń suwak <b>Czułość</b> w ⚙️ OPCJE w prawo (np. 50–60).</div></div></div>
+   <div class="rule tip"><div class="ri">📍</div><div><div class="rt">Często myli single z treble/double</div><div class="rd">Sprawdź, czy siatka leży dokładnie na drutach (🎯 KALIBRUJ), przestaw telefon bardziej z boku i bliżej. Poprawiaj błędne lotki — aplikacja nauczy się Twojego ustawienia.</div></div></div>
+   <div class="rule tip"><div class="ri">📨</div><div><div class="rt">Zgłoś pomyłkę jednym dotknięciem</div><div class="rd">Każda poprawka zapisuje się jako zgłoszenie: zdjęcie tarczy przed i po rzucie oraz dane wykrycia (możesz też dotknąć <b>🐞 ZGŁOŚ POMYŁKĘ</b>). W ⚙️ OPCJE przycisk <b>📤 WYŚLIJ ZGŁOSZENIA</b> pozwala je przesłać — dzięki nim kamera z każdą wersją jest dokładniejsza.</div></div></div>
+  </div>
+ </div>
+</section>
+
+<!-- NOWE GRY -->
+<section id="gry" style="background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border)">
+  <div class="centered">
+    <div class="section-eyebrow">Nowe tryby gry</div>
+    <h2 class="section-title">Pięć nowych gier<br>na każdy wieczór</h2>
+    <p class="section-sub">Klasyki z pubów i treningów zawodowców. Dla 1–4 graczy (Killer od 2), z klawiaturą albo auto-kamerą — trafienia celu świecą na zielono, pudła na czerwono.</p>
+  </div>
+  <div class="games-grid">
+    <div class="game-card"><div class="gi">🔪</div><div class="gt">Killer</div><div class="gs">2–4 GRACZY · NA PRZETRWANIE</div><p>Każdy dostaje swój numer i 3 życia. Traf double swojego numeru, żeby zostać <strong style="color:var(--text)">killerem</strong> — wtedy każde trafienie w double rywala zabiera mu życie. Uwaga: killer, który trafi własny double, sam traci życie. Wygrywa ostatni żywy.</p></div>
+    <div class="game-card"><div class="gi">✂️</div><div class="gt">Halve-It</div><div class="gs">9 RUND · START Z 40 PKT</div><p>Cele po kolei: 15, 16, dowolny double, 17, 18, dowolny treble, 19, 20 i bull. Trafienia dodają punkty — ale jeśli w turze ani razu nie trafisz celu, Twój wynik <strong style="color:var(--text)">spada o połowę</strong>.</p></div>
+    <div class="game-card"><div class="gi">🀄</div><div class="gt">Shanghai</div><div class="gs">7 RUND · NAGŁA ŚMIERĆ</div><p>W rundzie N liczy się tylko liczba N — single, double i treble. Kto w jednej turze trafi single, double i treble tej samej liczby, robi <strong style="color:var(--text)">SHANGHAI</strong> i natychmiast wygrywa.</p></div>
+    <div class="game-card"><div class="gi">🎯</div><div class="gt">Bob's 27</div><div class="gs">TRENING DOUBLI · D1 → BULL</div><p>Startujesz z 27 punktami i rzucasz kolejno w D1, D2 … D20 i bulla. Każde trafienie dodaje wartość doubla, tura bez trafienia ją odejmuje. Spadniesz do zera — odpadasz. Rekord to 1437.</p></div>
+    <div class="game-card"><div class="gi">💰</div><div class="gt">121 Checkout</div><div class="gs">ZEJŚCIA · 10 PRÓB</div><p>Masz 9 lotek, żeby zejść ze 121 na double. Udało się — kolejny cel to 122, potem 123… Nie udało się — próbujesz dalej z tym samym. Podpowiedź zejścia na ekranie, liczy się najwyższy checkout.</p></div>
+    <div class="game-card"><div class="gi">💪</div><div class="gt">Treningi z kamerą</div><div class="gs">ATC + 8 ĆWICZEŃ</div><p>Around the Clock i wszystkie ćwiczenia z zakładki Trening (Treble, Double, Checkout, Shanghai, Power Scoring, Nine Darter…) liczą się teraz same — wystarczy rzucać.</p></div>
+  </div>
+</section>
+
 <!-- HOW IT WORKS -->
 <section id="jak-zaczac" style="background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border)">
   <div class="centered">
@@ -355,8 +575,8 @@ footer{background:var(--surface);border-top:1px solid var(--border);padding:28px
     <div class="how-step">
       <div class="how-num">1</div>
       <div class="how-body">
-        <div class="how-title">Pobierz plik app.html</div>
-        <p class="how-desc">Kliknij przycisk "Pobierz". Jeden plik HTML, ~13 MB. Żadnych zależności, żadnych reklam, 100% satysfakcji.</p>
+        <div class="how-title">Otwórz lub pobierz aplikację</div>
+        <p class="how-desc">Kliknij „Graj / Instaluj”, żeby od razu grać w przeglądarce i dodać aplikację do ekranu głównego — albo „Pobierz”, żeby mieć cały program w jednym pliku (~3 MB). Żadnych reklam, 100% satysfakcji.</p>
       </div>
     </div>
     <div class="how-step">
@@ -370,7 +590,7 @@ footer{background:var(--surface);border-top:1px solid var(--border);padding:28px
       <div class="how-num">3</div>
       <div class="how-body">
         <div class="how-title">Graj</div>
-        <p class="how-desc">Wybierz tryb, wpisz imiona, skonfiguruj opcje (Double-In/Out, liczba legów) i zacznij. Do gry online — załóż konto, stwórz pokój, poczekaj na dołączenie gracza. Rywalizuj fair!</p>
+        <p class="how-desc">Wybierz tryb, wpisz imiona, skonfiguruj opcje (Double-In/Out, liczba legów) i zacznij. Chcesz, żeby liczyło samo? Postaw telefon na statywie i włącz <a href="#kamera" style="color:var(--cyan)">auto-kamerę</a>. Do gry online — załóż konto, stwórz pokój i zaproś znajomego. Rywalizuj fair!</p>
       </div>
     </div>
   </div>
@@ -415,9 +635,9 @@ footer{background:var(--surface);border-top:1px solid var(--border);padding:28px
   <h2 class="section-title centered">Darmowy. Na zawsze.</h2>
   <div class="dl-card">
     <div style="font-size:48px;margin-bottom:12px">🎯</div>
-    <div class="dl-filename">app.html</div>
-    <div class="dl-size">pojedynczy plik · HTML + JavaScript</div>
-    <a href="app.html" download class="btn-primary" style="width:100%;justify-content:center;font-size:22px">
+    <div class="dl-filename">DartsMasterPro.html</div>
+    <div class="dl-size">pojedynczy plik · ok. 3 MB · działa też bez internetu</div>
+    <a href="DartsMasterPro.html" download="DartsMasterPro.html" class="btn-primary" style="width:100%;justify-content:center;font-size:22px">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
       Pobierz
     </a>
@@ -436,6 +656,23 @@ footer{background:var(--surface);border-top:1px solid var(--border);padding:28px
     <h2 class="section-title">Najczęstsze pytania</h2>
   </div>
   <div class="faq-wrap">
+
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">Czy do auto-kamery potrzebuję specjalnego sprzętu?</div>
+      <div class="faq-a">Nie. Wystarczy jeden telefon z aparatem i dowolny statyw (albo stabilna półka) ustawiony z boku tarczy. Działa na zwykłej tarczy sizalowej. Najlepsze efekty daje równe światło — np. ring LED nad tarczą.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">Jak dokładna jest auto-kamera?</div>
+      <div class="faq-a">Przy dobrym ustawieniu zdecydowana większość lotek liczy się poprawnie. Najtrudniejsze są lotki wbite tuż przy drucie — takie aplikacja oznacza jako niepewne i podpowiada drugie pole. Każdą lotkę poprawisz jednym dotknięciem, a aplikacja uczy się z poprawek, więc z czasem myli się coraz rzadziej.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">Czy obraz z kamery jest gdzieś wysyłany?</div>
+      <div class="faq-a">W grze lokalnej obraz jest analizowany wyłącznie na Twoim telefonie i nigdzie nie trafia. W grze online z kamerą rywal widzi podgląd Twojej tarczy na żywo — tylko w trakcie meczu. Zgłoszenia błędów (zdjęcia tarczy) zapisują się w telefonie i wysyłasz je tylko wtedy, gdy sam je wyeksportujesz.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">Jak włączyć powiadomienia o zaproszeniach?</div>
+      <div class="faq-a">W zakładce Online dotknij „🔕 WŁĄCZ POWIADOMIENIA O ZAPROSZENIACH” i zezwól na powiadomienia. Na iPhonie powiadomienia działają, gdy aplikacja jest dodana do ekranu głównego (Udostępnij → Do ekranu początkowego).</div>
+    </div>
     <div class="faq-item">
       <div class="faq-q" onclick="toggleFaq(this)">Czy aplikacja wymaga internetu?</div>
       <div class="faq-a">Do gry lokalnej — nie. Wystarczy otworzyć plik w przeglądarce. Internet jest wymagany tylko do trybu online (matchmaking i synchronizacja przez Firebase) oraz do załadowania czcionek Google przy pierwszym uruchomieniu.</div>
