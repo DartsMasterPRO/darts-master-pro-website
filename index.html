@@ -254,6 +254,48 @@ footer{background:var(--surface);border-top:1px solid var(--border);padding:28px
   .cam-section{padding:70px 18px}
   .cam-h3{font-size:25px}
 }
+
+/* ===== TRYB TV ===== */
+.tv-section{padding:90px 24px;position:relative;z-index:1;border-top:1px solid var(--border);background:radial-gradient(ellipse at 50% 0,rgba(0,229,255,.07),transparent 60%)}
+.tv-wrap{max-width:1040px;margin:0 auto}
+.tv-hero{display:grid;grid-template-columns:1.25fr .75fr;gap:40px;align-items:center}
+.tv-set{position:relative;padding-bottom:26px}
+.tv-screen{background:#050508;border:10px solid #15151c;border-radius:14px;aspect-ratio:16/9;box-shadow:0 0 0 1px #2a2a36,0 30px 80px rgba(0,0,0,.6),0 0 60px rgba(0,229,255,.12);overflow:hidden;display:flex;flex-direction:column;font-family:'Bebas Neue',cursive}
+.tv-set::after{content:'';position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:34%;height:16px;background:linear-gradient(#1b1b24,#0c0c12);border-radius:0 0 10px 10px}
+.tv-bar{display:flex;justify-content:space-between;align-items:center;padding:1.4% 3%;border-bottom:1px solid #1d1d28;font-size:clamp(9px,1.6vw,15px);letter-spacing:2px;color:#c8c8d8}
+.tv-bar .lg{color:var(--red);text-shadow:0 0 10px rgba(255,59,59,.6)}
+.tv-halves{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:2.4%;padding:2.4% 3%;min-height:0}
+.tv-p{border:2px solid #22223a;border-radius:10px;overflow:hidden;display:flex;flex-direction:column;background:#0d0d14;min-height:0}
+.tv-p.on{border-color:var(--cyan);box-shadow:0 0 22px rgba(0,229,255,.35)}
+.tv-cam{flex:1;min-height:0;background:#000;display:flex;align-items:center;justify-content:center;position:relative}
+.tv-cam svg{height:92%;width:auto}
+.tv-tag{position:absolute;top:6px;left:6px;font-size:clamp(7px,1.1vw,11px);letter-spacing:2px;color:var(--cyan);background:rgba(0,0,0,.65);padding:2px 6px;border-radius:4px}
+.tv-info{text-align:center;padding:3% 0 4%}
+.tv-nm{font-size:clamp(9px,1.5vw,15px);letter-spacing:2px;color:#e8e8f0}
+.tv-sc{font-size:clamp(26px,5vw,52px);line-height:.95;color:#fff}
+.tv-p.on .tv-sc{text-shadow:0 0 18px rgba(0,229,255,.6)}
+.tv-dr{display:flex;justify-content:center;gap:5px;margin-top:3px;font-size:clamp(8px,1.2vw,13px)}
+.tv-dr span{background:#1a1a28;border:1px solid #2a2a40;border-radius:4px;padding:1px 7px;color:#c8c8d8}
+.tv-flash{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
+.tv-flash b{font-size:clamp(40px,9vw,96px);color:var(--gold);text-shadow:0 0 30px rgba(255,215,0,.8);animation:tvfl 4s infinite;opacity:0}
+@keyframes tvfl{0%,55%{opacity:0;transform:scale(.6)}62%{opacity:1;transform:scale(1.1)}75%{opacity:1;transform:scale(1)}85%,100%{opacity:0;transform:scale(1)}}
+.tv-phone{background:#000;border:2px solid var(--border);border-radius:22px;padding:8px;max-width:220px;margin:0 auto}
+.tv-phone .in{background:#101018;border-radius:15px;padding:16px 14px;text-align:center}
+.tv-phone .t{font-family:'Bebas Neue',cursive;font-size:20px;letter-spacing:2px;color:var(--text)}
+.tv-phone .code{font-family:'Bebas Neue',cursive;font-size:44px;letter-spacing:10px;color:var(--gold);line-height:1;margin:6px 0}
+.tv-phone .qr{width:110px;height:110px;margin:8px auto;background:#fff;border-radius:8px;padding:8px}
+.tv-phone .qr svg{width:100%;height:100%}
+.tv-phone .tg{display:flex;justify-content:space-between;align-items:center;background:#1a1a28;border-radius:10px;padding:8px 10px;font-size:12px;color:var(--text);margin-top:8px}
+.tv-phone .tg i{width:34px;height:18px;border-radius:9px;background:var(--green);position:relative}
+.tv-phone .tg i::after{content:'';position:absolute;right:2px;top:2px;width:14px;height:14px;border-radius:50%;background:#fff}
+.tv-uses{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:44px}
+.tv-use{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px}
+.tv-use .i{font-size:28px}
+.tv-use .t{font-family:'Bebas Neue',cursive;font-size:22px;letter-spacing:1px;color:var(--text);margin:6px 0 4px}
+.tv-use p{font-size:14px;color:var(--muted);line-height:1.6}
+.feat-card.is-new2{border-color:rgba(0,229,255,.4)}
+.feat-card.is-new2 .feat-title::after{content:'NOWOŚĆ 4.1';font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1.5px;color:#000;background:var(--cyan);padding:2px 6px;border-radius:3px;margin-left:8px;vertical-align:middle}
+@media(max-width:760px){.tv-bar span:nth-child(2){display:none}.tv-hero{grid-template-columns:1fr}.tv-uses{grid-template-columns:1fr}.tv-section{padding:70px 14px}}
 </style>
 </head>
 <body>
@@ -300,7 +342,7 @@ footer{background:var(--surface);border-top:1px solid var(--border);padding:28px
     <span class="t-dim">Stworzona z pasji do gry.</span>
   </h1>
   <p class="hero-sub">
-    <strong>Nowość: auto-kamera</strong> — postaw telefon na statywie, a aplikacja sama rozpozna lotki i policzy punkty. <strong>Zero reklam.</strong> Graj lokalnie z przyjaciółmi albo <strong>online</strong>.
+    <strong>Nowość: tryb TV</strong> — wyniki i obraz tarcz na dużym ekranie w pubie albo w salonie. <strong>Auto-kamera</strong> sama rozpozna lotki i policzy punkty. <strong>Zero reklam.</strong> Graj lokalnie z przyjaciółmi albo <strong>online</strong>.
   </p>
   <div class="hero-cta-group">
     <a href="DartsMasterPro.html" download="DartsMasterPro.html" class="btn-primary">
@@ -311,7 +353,8 @@ footer{background:var(--surface);border-top:1px solid var(--border);padding:28px
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
       Graj / Instaluj
     </a>
-    <a href="#kamera" class="btn-secondary">📷 Jak działa auto-kamera →</a>
+    <a href="#tv" class="btn-secondary">📺 Tryb TV →</a>
+    <a href="#kamera" class="btn-secondary">📷 Auto-kamera →</a>
   </div>
   <p class="hero-note"><span>✓</span> Bezpłatna na zawsze &nbsp;·&nbsp; <span>✓</span> Działa offline &nbsp;·&nbsp; <span>✓</span> Brak reklam</p>
 
@@ -327,6 +370,8 @@ footer{background:var(--surface);border-top:1px solid var(--border);padding:28px
   <div class="stat-item"><div class="stat-num">8</div><div class="stat-lbl">ćwiczeń</div></div>
   <div class="stat-item"><div class="stat-num">📷</div><div class="stat-lbl">auto-liczenie</div></div>
   <div class="stat-item"><div class="stat-num">ELO</div><div class="stat-lbl">ranking online</div></div>
+  <div class="stat-item"><div class="stat-num">📺</div><div class="stat-lbl">tryb TV</div></div>
+  <div class="stat-item"><div class="stat-num">35</div><div class="stat-lbl">odznak</div></div>
   </div>
   
 </div>
@@ -340,35 +385,91 @@ footer{background:var(--surface);border-top:1px solid var(--border);padding:28px
   </div>
   <div class="features-grid">
 
-    <div class="feat-card is-new">
+    <div class="feat-card is-new2">
+      <span class="feat-icon">📺</span>
+      <div class="feat-title">Tablica na TV</div>
+      <p class="feat-desc">Wyniki, lektor i obraz tarcz z kamer na dużym ekranie — w pubie albo w domu. Dowolna przeglądarka, kod lub QR. <a href="#tv" style="color:var(--cyan)">Zobacz →</a></p>
+      <span class="feat-tag tag-cyan">Smart TV · Google TV · Laptop</span>
+    </div>
+
+    <div class="feat-card is-new2">
+      <span class="feat-icon">🪪</span>
+      <div class="feat-title">Karta zawodnika</div>
+      <p class="feat-desc">Dotknij gracza w meczu online: zdjęcie lub avatar, poziom, średnia, 9 lotek, checkout, wykres formy, mapa trafień i skupienie z kamery. Każde pole otwiera własny wykres — plus pełna historia Waszych meczów.</p>
+      <span class="feat-tag tag-gold">Statystyki · Head-to-head</span>
+    </div>
+
+    <div class="feat-card is-new2">
+      <span class="feat-icon">🎙</span>
+      <div class="feat-title">Rozmowa z rywalem</div>
+      <p class="feat-desc">W meczu online z kamerą włączasz mikrofon jednym przyciskiem i gadasz z przeciwnikiem jak przez telefon — bez echa. Rywala możesz w każdej chwili wyciszyć.</p>
+      <span class="feat-tag tag-green">Na żywo · Bez echa</span>
+    </div>
+
+    <div class="feat-card is-new2">
+      <span class="feat-icon">🗣</span>
+      <div class="feat-title">Lektor z Twoim nickiem</div>
+      <p class="feat-desc">Profesjonalny lektor wywołuje każdy wynik po angielsku, a w zasięgu checkoutu mówi jak w PDC: „Zeltron, you require 96”.</p>
+      <span class="feat-tag tag-red">Game shot · 180!</span>
+    </div>
+
+    <div class="feat-card is-new2">
+      <span class="feat-icon">🍻</span>
+      <div class="feat-title">Tryb pubowy</div>
+      <p class="feat-desc">Gra drużynowa (pary, team vs team) i turniej na miejscu: każdy z każdym albo drabinka pucharowa, z tabelą i obrazkiem do wrzucenia na grupę.</p>
+      <span class="feat-tag tag-gold">Drużyny · Drabinka</span>
+    </div>
+
+    <div class="feat-card is-new2">
+      <span class="feat-icon">👥</span>
+      <div class="feat-title">Znajomi, sezony, turnieje</div>
+      <p class="feat-desc">Lista znajomych z widocznym statusem online, miesięczne sezony z podium i odznaką, turnieje online z drabinką oraz oglądanie meczów innych graczy na żywo.</p>
+      <span class="feat-tag tag-cyan">Społeczność · Live</span>
+    </div>
+
+    <div class="feat-card is-new2">
+      <span class="feat-icon">🤖</span>
+      <div class="feat-title">Bot do gry</div>
+      <p class="feat-desc">Nie masz z kim zagrać? Bot rzuca lotka po lotce w 501/301 na wybranym poziomie — od średniej 30 do 110. Idealny sparing przed ligą.</p>
+      <span class="feat-tag tag-green">Średnia 30–110</span>
+    </div>
+
+    <div class="feat-card is-new2">
+      <span class="feat-icon">🏅</span>
+      <div class="feat-title">Odznaki i raport meczu</div>
+      <p class="feat-desc">35 odznak do zdobycia (pierwsza 180, 9-dart, ton-plus checkouty…), plan treningowy dnia, raport meczu jako obrazek do udostępnienia i automatyczna kopia zapasowa w chmurze.</p>
+      <span class="feat-tag tag-red">Osiągnięcia · Backup</span>
+    </div>
+
+    <div class="feat-card">
       <span class="feat-icon">🤖</span>
       <div class="feat-title">Auto-kamera</div>
       <p class="feat-desc">Telefon na statywie rozpoznaje wbite lotki i sam wpisuje punkty. Lektor wywołuje każdą lotkę, a aplikacja uczy się z Twoich poprawek. <a href="#kamera" style="color:var(--cyan)">Jak to ustawić →</a></p>
       <span class="feat-tag tag-cyan">Auto-liczenie · 1 telefon</span>
     </div>
 
-    <div class="feat-card is-new">
+    <div class="feat-card">
       <span class="feat-icon">🏆</span>
       <div class="feat-title">Ranking ELO</div>
       <p class="feat-desc">Każdy mecz online 1 na 1 zmienia Twoje ELO — wygrana z mocniejszym daje więcej. Poziomy od 🥉 Brązu do 👑 Mistrza, wykres ELO i ostatnie mecze w profilu gracza.</p>
       <span class="feat-tag tag-gold">Ranking · Profil</span>
     </div>
 
-    <div class="feat-card is-new">
+    <div class="feat-card">
       <span class="feat-icon">📈</span>
       <div class="feat-title">Wykres formy i mapa trafień</div>
       <p class="feat-desc">Średnia, checkout % i skupienie dzień po dniu z linią trendu. Mapa trafień pokazuje, gdzie naprawdę lądują Twoje lotki przy T20, T19 i doublach — i w którą stronę uciekają.</p>
       <span class="feat-tag tag-green">Postęp · Skupienie</span>
     </div>
 
-    <div class="feat-card is-new">
+    <div class="feat-card">
       <span class="feat-icon">📊</span>
       <div class="feat-title">Statystyki meczu</div>
       <p class="feat-desc">Po meczu online jednym przyciskiem: Twoje i rywala średnie, najwyższy checkout, 180-tki, 140+, 100+, najlepszy leg, rzucone lotki i przebieg każdego legu.</p>
       <span class="feat-tag tag-red">Ty vs rywal</span>
     </div>
 
-    <div class="feat-card is-new">
+    <div class="feat-card">
       <span class="feat-icon">📨</span>
       <div class="feat-title">Zaproszenia do gry</div>
       <p class="feat-desc">Zaproś znajomego po nicku albo z listy ostatnich rywali. Dostanie powiadomienie i dołączy do pokoju jednym dotknięciem — nawet gdy aplikacja jest zamknięta.</p>
@@ -443,6 +544,48 @@ footer{background:var(--surface);border-top:1px solid var(--border);padding:28px
   </div>
 </section>
 
+
+<!-- TRYB TV -->
+<section class="tv-section" id="tv">
+  <div class="tv-wrap">
+    <div class="section-eyebrow">Nowość 4.1 · Tryb TV</div>
+    <h2 class="section-title">Wyniki na dużym ekranie.<br>Pub, dom, impreza 📺🍺</h2>
+    <p class="section-sub">Rzucasz, a cała ekipa widzi wynik na telewizorze — jak w transmisji PDC. Bez kabli, bez Chromecasta, bez instalowania aplikacji na TV: wystarczy przeglądarka i 4-literowy kod z telefonu.</p>
+    <div class="tv-hero" style="margin-top:40px">
+      <div class="tv-set"><div class="tv-screen">
+        <div class="tv-bar"><span class="lg">DARTSMASTER PRO</span><span>501 · DOUBLE OUT · LEG 2 · ONLINE</span><span>21:37</span></div>
+        <div class="tv-halves">
+          <div class="tv-p"><div class="tv-cam"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="49" fill="#111"/><path d="M50 50 L46.84 10.13 A40 40 0 0 1 59.31 11.10 Z" fill="#1f8f3a"/><path d="M50 50 L59.31 11.10 A40 40 0 0 1 70.88 15.88 Z" fill="#c62828"/><path d="M50 50 L70.88 15.88 A40 40 0 0 1 80.40 24.00 Z" fill="#1f8f3a"/><path d="M50 50 L80.40 24.00 A40 40 0 0 1 86.95 34.67 Z" fill="#c62828"/><path d="M50 50 L86.95 34.67 A40 40 0 0 1 89.87 46.84 Z" fill="#1f8f3a"/><path d="M50 50 L89.87 46.84 A40 40 0 0 1 88.90 59.31 Z" fill="#c62828"/><path d="M50 50 L88.90 59.31 A40 40 0 0 1 84.12 70.88 Z" fill="#1f8f3a"/><path d="M50 50 L84.12 70.88 A40 40 0 0 1 76.00 80.40 Z" fill="#c62828"/><path d="M50 50 L76.00 80.40 A40 40 0 0 1 65.33 86.95 Z" fill="#1f8f3a"/><path d="M50 50 L65.33 86.95 A40 40 0 0 1 53.16 89.87 Z" fill="#c62828"/><path d="M50 50 L53.16 89.87 A40 40 0 0 1 40.69 88.90 Z" fill="#1f8f3a"/><path d="M50 50 L40.69 88.90 A40 40 0 0 1 29.12 84.12 Z" fill="#c62828"/><path d="M50 50 L29.12 84.12 A40 40 0 0 1 19.60 76.00 Z" fill="#1f8f3a"/><path d="M50 50 L19.60 76.00 A40 40 0 0 1 13.05 65.33 Z" fill="#c62828"/><path d="M50 50 L13.05 65.33 A40 40 0 0 1 10.13 53.16 Z" fill="#1f8f3a"/><path d="M50 50 L10.13 53.16 A40 40 0 0 1 11.10 40.69 Z" fill="#c62828"/><path d="M50 50 L11.10 40.69 A40 40 0 0 1 15.88 29.12 Z" fill="#1f8f3a"/><path d="M50 50 L15.88 29.12 A40 40 0 0 1 24.00 19.60 Z" fill="#c62828"/><path d="M50 50 L24.00 19.60 A40 40 0 0 1 34.67 13.05 Z" fill="#1f8f3a"/><path d="M50 50 L34.67 13.05 A40 40 0 0 1 46.84 10.13 Z" fill="#c62828"/><circle cx="50" cy="50" r="33" fill="none" stroke="#e8dcc0" stroke-width="5" opacity=".9" stroke-dasharray="5.2 5.2"/><circle cx="50" cy="50" r="18" fill="none" stroke="#e8dcc0" stroke-width="4" opacity=".9" stroke-dasharray="2.8 2.8"/><circle cx="50" cy="50" r="4" fill="#1f8f3a"/><circle cx="50" cy="50" r="2" fill="#c62828"/><g stroke-linecap="round"><line x1="51" y1="15" x2="60" y2="2" stroke="#ddd" stroke-width="1.6"/><line x1="47" y1="18" x2="42" y2="3" stroke="#ddd" stroke-width="1.6"/><line x1="53" y1="21" x2="68" y2="10" stroke="#ddd" stroke-width="1.6"/></g></svg></div><div class="tv-info"><div class="tv-nm">KUBA</div><div class="tv-sc">141</div><div class="tv-dr"><span>ŚR. 68.4</span></div></div></div>
+          <div class="tv-p on"><div class="tv-cam"><span class="tv-tag">▶ RZUCA</span><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="49" fill="#111"/><path d="M50 50 L46.84 10.13 A40 40 0 0 1 59.31 11.10 Z" fill="#1f8f3a"/><path d="M50 50 L59.31 11.10 A40 40 0 0 1 70.88 15.88 Z" fill="#c62828"/><path d="M50 50 L70.88 15.88 A40 40 0 0 1 80.40 24.00 Z" fill="#1f8f3a"/><path d="M50 50 L80.40 24.00 A40 40 0 0 1 86.95 34.67 Z" fill="#c62828"/><path d="M50 50 L86.95 34.67 A40 40 0 0 1 89.87 46.84 Z" fill="#1f8f3a"/><path d="M50 50 L89.87 46.84 A40 40 0 0 1 88.90 59.31 Z" fill="#c62828"/><path d="M50 50 L88.90 59.31 A40 40 0 0 1 84.12 70.88 Z" fill="#1f8f3a"/><path d="M50 50 L84.12 70.88 A40 40 0 0 1 76.00 80.40 Z" fill="#c62828"/><path d="M50 50 L76.00 80.40 A40 40 0 0 1 65.33 86.95 Z" fill="#1f8f3a"/><path d="M50 50 L65.33 86.95 A40 40 0 0 1 53.16 89.87 Z" fill="#c62828"/><path d="M50 50 L53.16 89.87 A40 40 0 0 1 40.69 88.90 Z" fill="#1f8f3a"/><path d="M50 50 L40.69 88.90 A40 40 0 0 1 29.12 84.12 Z" fill="#c62828"/><path d="M50 50 L29.12 84.12 A40 40 0 0 1 19.60 76.00 Z" fill="#1f8f3a"/><path d="M50 50 L19.60 76.00 A40 40 0 0 1 13.05 65.33 Z" fill="#c62828"/><path d="M50 50 L13.05 65.33 A40 40 0 0 1 10.13 53.16 Z" fill="#1f8f3a"/><path d="M50 50 L10.13 53.16 A40 40 0 0 1 11.10 40.69 Z" fill="#c62828"/><path d="M50 50 L11.10 40.69 A40 40 0 0 1 15.88 29.12 Z" fill="#1f8f3a"/><path d="M50 50 L15.88 29.12 A40 40 0 0 1 24.00 19.60 Z" fill="#c62828"/><path d="M50 50 L24.00 19.60 A40 40 0 0 1 34.67 13.05 Z" fill="#1f8f3a"/><path d="M50 50 L34.67 13.05 A40 40 0 0 1 46.84 10.13 Z" fill="#c62828"/><circle cx="50" cy="50" r="33" fill="none" stroke="#e8dcc0" stroke-width="5" opacity=".9" stroke-dasharray="5.2 5.2"/><circle cx="50" cy="50" r="18" fill="none" stroke="#e8dcc0" stroke-width="4" opacity=".9" stroke-dasharray="2.8 2.8"/><circle cx="50" cy="50" r="4" fill="#1f8f3a"/><circle cx="50" cy="50" r="2" fill="#c62828"/><g stroke-linecap="round"><line x1="70" y1="40" x2="86" y2="30" stroke="#ddd" stroke-width="1.6"/></g></svg><div class="tv-flash"><b>180</b></div></div><div class="tv-info"><div class="tv-nm">ZELTRON</div><div class="tv-sc">96</div><div class="tv-dr"><span>T20</span><span>T20</span><span>T20</span></div></div></div>
+        </div>
+      </div></div>
+      <div>
+        <div class="tv-phone"><div class="in">
+          <div class="t">📺 TABLICA NA TV</div>
+          <div style="font-size:11px;color:var(--muted)">kod telewizora</div>
+          <div class="code">K7QF</div>
+          <div class="qr"><svg viewBox="0 0 21 21" shape-rendering="crispEdges"><path fill="#000" d="M0 0h7v7H0zM1 1v5h5V1zM2 2h3v3H2zM14 0h7v7h-7zM15 1v5h5V1zM16 2h3v3h-3zM0 14h7v7H0zM1 15v5h5v-5zM2 16h3v3H2zM8 0h1v2H8zM10 1h2v1h-2zM9 3h3v1H9zM8 5h2v2H8zM11 6h2v2h-2zM8 8h4v1H8zM0 8h2v1H0zM3 9h3v1H3zM14 8h3v2h-3zM18 9h3v1h-3zM9 10h2v3H9zM12 11h3v1h-3zM16 12h2v2h-2zM19 11h2v3h-2zM8 14h2v1H8zM11 14h3v2h-3zM15 15h2v1h-2zM18 16h3v1h-3zM8 17h1v4H8zM10 18h3v1h-3zM14 18h2v3h-2zM17 19h4v2h-4zM11 20h2v1h-2z"/></svg></div>
+          <div class="tg"><span>Nadawaj na TV</span><i></i></div>
+          <div class="tg" style="margin-top:6px"><span>Auto przy starcie gry</span><i></i></div>
+        </div></div>
+      </div>
+    </div>
+
+    <h3 class="cam-h3">📺 Jak włączyć — 3 kroki</h3>
+    <div class="steps-list">
+      <div class="step"><p><b>Na telefonie:</b> ☰ menu → <strong>Tablica na TV</strong> (albo przycisk 📺 TV na ekranie głównym) i włącz <strong>„Nadawaj na TV”</strong>. Zobaczysz kod i kod QR.</p></div>
+      <div class="step"><p><b>Na telewizorze:</b> otwórz link z telefonu w <strong>dowolnej przeglądarce</strong> — Smart TV (Samsung, LG), laptop podpięty HDMI albo Google TV / Android TV z przeglądarką z Google Play. Możesz też wpisać adres <strong>…/app?tv</strong> i 4-literowy kod.</p></div>
+      <div class="step"><p><b>Graj.</b> Wynik, średnie, lotki w turze, legi i ostatnie tury pojawiają się na TV na żywo. Dotknij „Włącz lektora” na TV — <strong>lektor wywołuje wyniki na głośnikach telewizora</strong> („One hundred and eighty!”, „Zeltron, you require 96”).</p></div>
+    </div>
+    <div class="callout">💡 Kod telewizora się nie zmienia — zapisz stronę w zakładkach TV i następnym razem tylko ją otwórz. Zaznacz <b>„Auto przy starcie gry”</b>, a telefon sam zacznie nadawać przy każdym meczu.</div>
+
+    <div class="tv-uses">
+      <div class="tv-use"><div class="i">🍺</div><div class="t">Wieczór w pubie</div><p>Telewizor nad barem pokazuje tablicę meczu. Kibice widzą, ile kto ma do zamknięcia, a 180-tka wybucha na pół ekranu.</p></div>
+      <div class="tv-use"><div class="i">🎥</div><div class="t">Obraz tarcz na TV</div><p>Gracie z auto-kamerą? TV dzieli ekran na pół i pokazuje <b style="color:var(--cyan)">tarcze obu zawodników na żywo</b> — także rywala online z drugiego końca Polski. W grze lokalnej: tarcza + wyniki obok.</p></div>
+      <div class="tv-use"><div class="i">🏆</div><div class="t">Turniej ze znajomymi</div><p>Tryb pubowy z drużynami albo drabinką i duży ekran dla wszystkich. Każdy widzi, kto teraz rzuca i jak stoi mecz — bez zaglądania w telefon.</p></div>
+    </div>
+  </div>
+</section>
 
 <!-- AUTO-KAMERA -->
 <section class="cam-section" id="kamera">
@@ -658,6 +801,15 @@ footer{background:var(--surface);border-top:1px solid var(--border);padding:28px
   <div class="faq-wrap">
 
     <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">Jak wyświetlić wyniki na telewizorze?</div>
+      <div class="faq-a">Na telefonie: ☰ → Tablica na TV → „Nadawaj na TV”. Na telewizorze otwórz pokazany link (albo zeskanuj kod QR) w dowolnej przeglądarce. Smart TV Samsung/LG mają przeglądarkę wbudowaną; na Google TV / Android TV zainstaluj dowolną przeglądarkę z Google Play. Działa też laptop podłączony do TV przez HDMI.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">Czy na TV widać tarcze graczy?</div>
+      <div class="faq-a">Tak — gdy gracie z auto-kamerą. W meczu online TV dzieli ekran na pół i pokazuje tarcze obu zawodników na żywo z wynikami pod spodem (obaj gracze muszą mieć aktualną wersję i być zalogowani). W grze lokalnej obok wyników widać tarczę z telefonu. Bez kamery TV pokazuje samą tablicę wyników.</div>
+    </div>
+
+    <div class="faq-item">
       <div class="faq-q" onclick="toggleFaq(this)">Czy do auto-kamery potrzebuję specjalnego sprzętu?</div>
       <div class="faq-a">Nie. Wystarczy jeden telefon z aparatem i dowolny statyw (albo stabilna półka) ustawiony z boku tarczy. Działa na zwykłej tarczy sizalowej. Najlepsze efekty daje równe światło — np. ring LED nad tarczą.</div>
     </div>
@@ -667,7 +819,7 @@ footer{background:var(--surface);border-top:1px solid var(--border);padding:28px
     </div>
     <div class="faq-item">
       <div class="faq-q" onclick="toggleFaq(this)">Czy obraz z kamery jest gdzieś wysyłany?</div>
-      <div class="faq-a">W grze lokalnej obraz jest analizowany wyłącznie na Twoim telefonie i nigdzie nie trafia. W grze online z kamerą rywal widzi podgląd Twojej tarczy na żywo — tylko w trakcie meczu. Zgłoszenia błędów (zdjęcia tarczy) zapisują się w telefonie i wysyłasz je tylko wtedy, gdy sam je wyeksportujesz.</div>
+      <div class="faq-a">W grze lokalnej obraz jest analizowany wyłącznie na Twoim telefonie i nigdzie nie trafia. W grze online z kamerą rywal widzi podgląd Twojej tarczy na żywo — tylko w trakcie meczu. Gdy włączysz tablicę na TV, obraz samej tarczy trafia też na Twój telewizor. Zgłoszenia błędów (zdjęcia tarczy) zapisują się w telefonie i wysyłasz je tylko wtedy, gdy sam je wyeksportujesz.</div>
     </div>
     <div class="faq-item">
       <div class="faq-q" onclick="toggleFaq(this)">Jak włączyć powiadomienia o zaproszeniach?</div>
