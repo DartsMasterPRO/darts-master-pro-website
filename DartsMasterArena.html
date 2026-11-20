@@ -763,6 +763,14 @@ input{outline:none}
       <span class="menu-item-icon">🎵</span>
       <span>Niestandardowe dźwięki</span>
     </div>
+    <div class="menu-item" onclick="closeMenu(); if(window.AutoCam)AutoCam.exportReports()">
+      <span class="menu-item-icon">🐞</span>
+      <span>Wyślij zgłoszenia <b id="menu-rpt-cnt" style="color:#ffd700"></b></span>
+    </div>
+    <div class="menu-item" id="menu-rpt-clear" style="display:none" onclick="closeMenu(); if(window.AutoCam)AutoCam.clearReports()">
+      <span class="menu-item-icon">🗑</span>
+      <span>Usuń wysłane zgłoszenia</span>
+    </div>
     <div class="menu-item" onclick="openInfo(); closeMenu()">
       <span class="menu-item-icon">ℹ️</span>
       <span id="about-label">O aplikacji</span>
@@ -1440,6 +1448,7 @@ function toggleMenu(){
   const toggle = document.getElementById('menu-toggle');
   menu.classList.toggle('open');
   toggle.classList.toggle('open');
+  try{if(menu.classList.contains('open')&&window.AutoCam&&AutoCam.reportCount)AutoCam.reportCount();}catch(e){}
   SFX.nav();
 }
 
@@ -8508,6 +8517,7 @@ function tipOf(px,raw,useGeo,soft){
   if(!geoOk&&(S.tipDir==='auto'||S.tipDir==='narrow'))useMin=cMin<cMax; // grot = węższy koniec
   else if(S.tipDir==='__force')useMin=FORCE_MIN;
   else if(!geoOk&&['down','up','left','right'].includes(S.tipDir)){const d={down:[0,1],up:[0,-1],left:[-1,0],right:[1,0]}[S.tipDir];useMin=(tmin*ex*d[0]+tmin*ey*d[1])>(tmax*ex*d[0]+tmax*ey*d[1]);}
+  HC_ADD=false;
   const lim=Math.max(1.5,L*0.03);let sx=0,sy=0,c=0;
   if(geoAx){ // szukaj grota w wąskim korytarzu wzdłuż osi lotki (omija skrzydełka piórek)
     const cor=Math.max(3,GEO.rpx*0.03);let tm=1e9;const inC=new Uint8Array(n),pp=new Float32Array(n);
@@ -8539,7 +8549,8 @@ function tipOf(px,raw,useGeo,soft){
   }
   // cienki grot znika po filtrze — idziemy dalej wzdłuż osi po surowej masce
   if(raw){const dx=useMin?-fx:fx,dy=useMin?-fy:fy,rh=GEO.rh;let maxS=Math.round(L*0.6);let gap=0,last=0;
-    const M=raw,ww=2,gp=3;
+    // wąski korytarz (±1 px) i krótka przerwa: szersze/luźniejsze przeskakiwało po szumie na drucie (zgłoszenia 11.2026: grot „przechodził” przez drut do sąsiedniego pola)
+    const M=raw,ww=1,gp=1;
     // grot nie wystaje dalej niż ~45 mm przed lufkę
     if(geoAx){const[nx,ny]=workToNorm(tx,ty),bb=ap(GEO.Hi,nx,ny),od=bb?outDir(bb[0],bb[1]):null;if(od)maxS=Math.max(3,Math.round(Math.min(maxS,od[2]*45/120)));}
     for(let s=1;s<=maxS;s++){let hit=false;
@@ -8557,15 +8568,22 @@ function tipOf(px,raw,useGeo,soft){
           const wmax=Math.max(...prof);
           if(wmax>=4){const thrW=Math.max(3,wmax*0.55);let vis=prof.findIndex(w=>w>=thrW);if(vis<0)vis=N;
             const tipThin=prof[0]+prof[1]+prof[2]<=thrW*1.2; // na samym końcu brak cienkiego grota?
-            if(vis<=3&&!tipThin||vis<=2){const add=(Lexp-vis)*cosA;tx+=dx*add;ty+=dy*add;LAST_FIX=Math.round(add/ppm);}else LAST_FIX=0;}
+            if((vis<=3&&!tipThin||vis<=2)&&hcShort(px,tx,ty,dx,dy,od,(Lexp-vis)*cosA)){const add=(Lexp-vis)*cosA;tx+=dx*add;ty+=dy*add;LAST_FIX=Math.round(add/ppm);HC_ADD=true;}else LAST_FIX=0;}
         }}}
   }
-  return{x:tx,y:ty,elong,ax:[ex,ey],useMin,tmin,tmax,mx,my,geo:geoAx||geoOk};
+  return{x:tx,y:ty,elong,ax:[ex,ey],useMin,tmin,tmax,mx,my,geo:geoAx||geoOk,hc:HC_ADD};
 }
 function tipOfForced(px,raw,useMin){
   const d=S.tipDir;S.tipDir='__force';FORCE_MIN=useMin;try{return tipOf(px,raw,false);}finally{S.tipDir=d;}
 }
-let FORCE_MIN=false,LAST_FIX=0;
+let FORCE_MIN=false,LAST_FIX=0,HC_ADD=false;
+// kompensacja ukrytego grota tylko wtedy, gdy lotka na obrazie jest wyraźnie KRÓTSZA niż zwykle (przód lotki faktycznie schowany).
+// Bez tego warunku dokładała ~25 mm do co drugiej lotki z widocznym grotem (zgłoszenia 20.11.2026: 19→3, 3→17, 20→5).
+function hcShort(px,tx,ty,dx,dy,od,add){
+  if(!od||!(add>0))return false;const rw=GEO.rw;let m=0;
+  for(const i of px){const t=(tx-i%rw)*dx+(ty-((i/rw)|0))*dy;if(t>m)m=t;} // grot → tył piórek
+  return m<od[2]*lenRatio()*0.55; // widać mniej niż ~55% zwykłej długości lotki
+}
 function fracChanged(cur,base,px){
   if(!px||!px.length)return 0;const T=effT(),a=hp(cur),b=hp(base);let n=0;
   for(const i of px){const j=i*3;if(Math.abs(a[j]-b[j])+Math.abs(a[j+1]-b[j+1])+Math.abs(a[j+2]-b[j+2])>T)n++;}
@@ -8831,7 +8849,7 @@ function analyze(cur){
   }
   lastMask=r.m;lastMaskT=performance.now();
   const blobN=r.px?r.px.length:0;DG.area=blobN;
-  const OCCT=S.occl===true&&excl&&r.px&&r.px.length?occlTouch(r.px,excl):0,OCC=OCCT>=8;if(S.debug&&OCCT)lg('styk z wcześniejszą lotką: '+OCCT+'px / '+r.px.length);
+  const OCCT=S.occl===true&&excl&&r.px&&r.px.length?occlTouch(r.px,excl):0;let OCC=OCCT>=8;if(S.debug&&OCCT)lg('styk z wcześniejszą lotką: '+OCCT+'px / '+r.px.length);
   if(blobN>=GEO.minA*0.3)lg('zmiana '+blobN+'px (min '+Math.round(GEO.minA)+', max '+Math.round(GEO.maxA)+', wszystkie '+r.total+')');
   if(blobN<GEO.minA){cand=null;if(blobN<GEO.minA*0.3){ref=cur;if(!turn.length)empty=cur;}status(turn.length?'Czekam na kolejną lotkę':'Gotowe — rzucaj 🎯','#00ff88');return;}
   if(blobN>GEO.maxA){lastBigTick=tickN;lg('za duża zmiana → zasłonięte');ref=refAge>25?cur:ref;refAge++;status('Coś zasłania tarczę…','#ff8c00');return;}
@@ -8851,25 +8869,33 @@ function analyze(cur){
     const last=turn[turn.length-1];const set=new Set(last.px);let ov=0;r.px.forEach(i=>{if(set.has(i))ov++;});
     if(!last.fell&&ov>r.px.length*0.6&&r.px.length<last.px.length*0.6){
       if(fracChanged(cur,last.before,last.px)<0.35&&turnKey0===tkey())markFell(turn.length-1);
+      else lg('zmiana w miejscu ostatniej lotki (poruszyła się) → nowe tło');
       ref=cur;return;
     }
   }
   if(closed||turn.length>=3){lg('tura pełna — czekam na wyjęcie');ref=cur;status('Wyjmij lotki z tarczy ✋','#ffd700');return;}
   if(turn.length&&turnKey0!==tkey()){closed=true;ref=cur;status('Tura zatwierdzona — wyjmij lotki ✋','#ffd700');return;}
-  if(sinceMove>45&&!cand&&!looksLikeDart(r.px,OCC).ok){lg('zmiana bez ruchu → nowe tło');ref=cur;if(!turn.length)empty=cur;return;}
+  if(sinceMove>45&&!cand&&!(GRPLK=looksLikeDart(r.px,OCC)).ok){lg('zmiana bez ruchu → nowe tło ('+GRPLK.why+')');ref=cur;if(!turn.length)empty=cur;return;}
   // zmiana głównie w miejscu istniejących lotek = ktoś je wyjmuje / lotka się rusza — to nie nowa lotka
   let GRP=false;
   if(turn.length&&r.exclFrac>0.6){
     if(lastBigTick>lastDartTick){lg('wyjmowanie lotek…');status('Wyjmowanie lotek…','#ffd700');cand=null;return;}
     // ciasna grupa: nowa lotka zachodzi na poprzednie (zmiana głównie na nich), ale jej widoczna część poza nimi wygląda jak lotka → licz dalej
     const vg=looksLikeDart(r.px,OCC);
-    if(!vg.ok){cand=null;return;}
-    GRP=true;if(!cand)lg('ciasna grupa — nowa lotka przy poprzednich ('+Math.round(r.exclFrac*100)+'% zmiany na nich)');
+    if(!vg.ok){
+      // lotka schowana częściowo za wcześniejszymi: widoczny fragment nie wygląda jak cała lotka i wcześniej czekaliśmy w nieskończoność (lotka nieliczona).
+      // Jeśli plama stoi nieruchomo i przechodzi łagodniejszy test „lotki zasłoniętej”, liczymy ją z obsługą ukrytego grota.
+      const st=blobStill(r),vr=OCC?vg:looksLikeDart(r.px,true);
+      if(st>=5&&vr.ok){if(!OCC)lg('ciasna grupa: lotka częściowo schowana za wcześniejszymi — liczę (nieruchoma od '+st+' odczytów)');OCC=true;}
+      else{if(GRPWHY!==vg.why){GRPWHY=vg.why;lg('ciasna grupa — czekam ('+vg.why+')');}cand=null;return;}
+    }
+    GRPWHY='';GRP=true;if(!cand)lg('ciasna grupa — nowa lotka przy poprzednich ('+Math.round(r.exclFrac*100)+'% zmiany na nich)');
   }
   if(turn.length&&lastBigTick>lastDartTick&&!closed){
     const st=blobStill(r);
-    if(st>=8&&looksLikeDart(r.px,OCC).ok){lg('to nie ręka — nieruchoma lotka od '+st+' odczytów, liczę');lastBigTick=lastDartTick;}
-    else{lg('ręka przy tarczy po rzucie — czekam na wyjęcie');cand=null;return;}
+    const lk=st>=8?looksLikeDart(r.px,OCC):null;
+    if(lk&&lk.ok){lg('to nie ręka — nieruchoma lotka od '+st+' odczytów, liczę');lastBigTick=lastDartTick;}
+    else{lg('ręka przy tarczy po rzucie — czekam na wyjęcie'+(lk?' ('+lk.why+')':''));cand=null;return;}
   }
   if(tickN-lastBigTick<12){lg('ręka przy tarczy — czekam');cand=null;status('Ruch przy tarczy…','#ff8c00');return;}
   {const v=looksLikeDart(r.px,OCC);
@@ -8917,7 +8943,7 @@ function analyze(cur){
     lg('to poruszona wcześniejsza lotka (grot w tym samym miejscu) — pomijam');ref=cur;status('Czekam na kolejną lotkę','#00ff88');return;}}
   lg('lotka → '+sc.lbl+' (grot '+Math.round(nx*1000)/10+'%,'+Math.round(ny*1000)/10+'%'+(LAST_FIX?', ukryty grot +'+LAST_FIX+' mm':'')+')');LAST_FIX=0;
   CUR_TIP=[nx,ny];if(!applyDart(sc)){lg('gra odrzuciła rzut');ref=cur;return;}
-  if(!OCCF&&!OCC&&tp.geo&&tp.elong>3)learnLen(r.px,tp);d.occl=OCCF;
+  if(!OCCF&&!OCC&&!tp.hc&&tp.geo&&tp.elong>3)learnLen(r.px,tp);d.occl=OCCF;
   if(!OCCF){try{d.axi=axisInfo(r.px,tp.x,tp.y);}catch(e){}}
   hmRec(d);d.after=cur;d.dbg={blob:r.px.length,total:r.total,exclFrac:r.exclFrac,geo:!!tp.geo,elong:tp.elong,ax:tp.ax,thr:effT(),noise:noiseEst,mv:DG.mv,mvThr:DG.mvThr};turn.push(d);ref=cur;refAge=0;lastDartTick=tickN;
   status('🎯 '+sc.lbl+(sc.val?' ('+sc.val+')':''),'#00ff88');sayDart(sc);
@@ -8927,7 +8953,7 @@ function analyze(cur){
 }
 // ===== LOTKI ZASŁONIĘTE PRZEZ WCZEŚNIEJSZE =====
 // grot schowany = koniec plamy od strony grota styka się z wcześniejszą lotką (widoczny grot ma wokół wolną tarczę)
-let STILL=null;
+let STILL=null,GRPWHY='',GRPLK=null;
 function blobStill(r){ // ile kolejnych odczytów ta sama plama stoi w miejscu (rozmiar ±12%, środek ±2% promienia)
   const rw=GEO.rw;let sx=0,sy=0;for(const i of r.px){sx+=i%rw;sy+=(i/rw)|0;}const n=r.px.length,cx=sx/n,cy=sy/n,h=STILL;
   const same=h&&Math.abs(n-h.n)<Math.max(n,h.n)*0.12&&Math.hypot(cx-h.cx,cy-h.cy)<GEO.rpx*0.02;
@@ -9234,7 +9260,7 @@ async function rptAdd(o){RPT.mem.push(o);if(RPT.mem.length>40)RPT.mem.shift();co
 async function rptAll(){const db=await idb();if(!db)return RPT.mem.slice();
   try{return await new Promise((ok,er)=>{const q=db.transaction('r').objectStore('r').getAll();q.onsuccess=()=>ok(q.result);q.onerror=er;});}catch(e){return RPT.mem.slice();}}
 async function rptClear(){RPT.mem=[];const db=await idb();if(db){try{await new Promise(ok=>{const t=db.transaction('r','readwrite');t.objectStore('r').clear();t.oncomplete=ok;});}catch(e){}}await rptCount();}
-async function rptCount(){const a=await rptAll();RPT.cnt=a.length;const b=$('dm-rpt-btn');if(b)b.textContent='📤 WYŚLIJ ZGŁOSZENIA ('+RPT.cnt+')';
+async function rptCount(){const a=await rptAll();RPT.cnt=a.length;{const m=$('menu-rpt-cnt');if(m)m.textContent=RPT.cnt?'('+RPT.cnt+')':'';const c=$('menu-rpt-clear');if(c)c.style.display=RPT.cnt?'':'none';}const b=$('dm-rpt-btn');if(b)b.textContent='📤 WYŚLIJ ZGŁOSZENIA ('+RPT.cnt+')';
   const o=$('dm-opt-btn');if(o)o.innerHTML='⚙️ OPCJE'+(RPT.cnt?' <span style="color:#ffd700">🐞'+RPT.cnt+'</span>':'');return RPT.cnt;}
 function roiJpeg(d){try{if(!d||!GEO)return null;const c=document.createElement('canvas');c.width=GEO.rw;c.height=GEO.rh;const x=c.getContext('2d');
   const id=x.createImageData(GEO.rw,GEO.rh);id.data.set(d);for(let i=3;i<id.data.length;i+=4)id.data[i]=255;x.putImageData(id,0,0);return c.toDataURL('image/jpeg',0.88);}catch(e){return null;}}
@@ -9259,10 +9285,21 @@ async function rptExport(){
   const d=new Date(),pad=x=>String(x).padStart(2,'0');
   const name='darts-master-arena-zgloszenia-'+d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())+'-'+pad(d.getHours())+pad(d.getMinutes())+'.json';
   const blob=new Blob([JSON.stringify({app:'Darts Master Arena',kind:'autocam-reports',exported:d.toISOString(),count:all.length,reports:all})],{type:'application/json'});
-  try{const f=new File([blob],name,{type:'application/json'});
-    if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:'Zgłoszenia pomyłek Darts Master Arena'});toast('📤 Wysłano '+all.length+' zgłoszeń');return;}}catch(e){if(e&&e.name==='AbortError')return;}
+  // udostępnianie (WhatsApp itd.): Chrome na Androidzie nie udostępnia plików .json — wtedy ten sam plik jako .txt (treść bez zmian)
+  let sf=null;try{if(navigator.canShare){for(const[nm,tp]of[[name,'application/json'],[name.replace(/\.json$/,'.txt'),'text/plain']]){const f=new File([blob],nm,{type:tp});if(navigator.canShare({files:[f]})){sf=f;break;}}}}catch(e){}
+  if(sf){try{await navigator.share({files:[sf],title:'Zgłoszenia pomyłek Darts Master Arena'});toast('📤 Wysłano '+all.length+' zgłoszeń');return;}
+    catch(e){if(e&&e.name==='AbortError')return;
+      // przygotowanie dużego pliku trwało za długo i przeglądarka zablokowała udostępnianie — drugie stuknięcie otworzy je od razu
+      if(e&&e.name==='NotAllowedError'){rptShareBtn(sf,all.length);return;}}}
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},2000);
   toast('📥 Pobrano plik ze zgłoszeniami ('+all.length+')');
+}
+function rptShareBtn(f,n){
+  let b=document.getElementById('rpt-share-btn');if(b)b.remove();b=document.createElement('button');b.id='rpt-share-btn';
+  b.textContent='📤 Udostępnij zgłoszenia ('+n+') — np. WhatsApp';
+  b.style.cssText='position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:99999;padding:14px 20px;border-radius:12px;border:1px solid #ffd700;background:#1a1a26;color:#ffd700;font-family:Bebas Neue,cursive;font-size:18px;letter-spacing:1px;box-shadow:0 6px 24px rgba(0,0,0,.6);cursor:pointer';
+  b.onclick=()=>{b.remove();navigator.share({files:[f],title:'Zgłoszenia pomyłek Darts Master Arena'}).then(()=>toast('📤 Wysłano '+n+' zgłoszeń')).catch(e=>{if(!e||e.name!=='AbortError')toast('⚠️ Nie udało się udostępnić');});};
+  document.body.appendChild(b);setTimeout(()=>{try{b.remove();}catch(e){}},20000);
 }
 function confirmClear(){return RPT.cnt?window.confirm('Usunąć '+RPT.cnt+' zgłoszeń?'):true;}
 function takeout(cur){
@@ -10178,6 +10215,7 @@ window.AutoCam={
   start,stop,toggleFs,openCal,nextRound,undoDart,close:dmClose,pick,setDart,pickTab,addMissed,addMissedTab,refocus(){refocus(true);},
   sheet(){$('dm-sheet').classList.toggle('on');applyVoice();rptCount();lrnUI();},
   exportReports(){rptExport();},
+  reportCount(){return rptCount();},
   correctTap(nx,ny){correctLast(nx,ny);},
   hmSet(k,v){HMF[k]=k==='days'?+v:v;hmRender();},
   hmClear(){if(!window.confirm('Usunąć całą historię rzutów z mapy?'))return;HITS=[];hmSave();hmRender();},
@@ -10190,7 +10228,7 @@ window.AutoCam={
   bullActive(){return BULL.active;},
   testApplause(l){applause(l||1);},
   learnReset(){LRN.samples=[];LRN.cal=CAL?CAL.pts.map(p=>p.slice()):null;FINE.h=[];FINE.off=[0,0];FINE.gain=0;fineSave();lrnSave();toast('🧠 Zapomniano nauczone korekty');},
-  async clearReports(){if(!confirmClear()){return;}await rptClear();toast('🗑 Usunięto zgłoszenia');},
+  async clearReports(){await rptCount();if(!RPT.cnt){toast('Brak zgłoszeń');return;}if(!confirmClear()){return;}await rptClear();toast('🗑 Usunięto zgłoszenia');},
   reportDart(i){$('dm-pick').classList.remove('on');if(turn[i])report('manual',turn[i],null,null);},
   setVoice(v){if(v==='__pack'){try{Caller.set(true);}catch(e){}}else{try{Caller.set(false);}catch(e){}S.voice=v;saveCfg();applyVoice();}try{TTS.say('Treble twenty',0.7,0.95);}catch(e){}},
   testVoice(){applyVoice();try{TTS.say('One hundred and eighty',0.7,0.9);}catch(e){}},
