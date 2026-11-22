@@ -4850,7 +4850,7 @@ document.addEventListener('DOMContentLoaded', function() {
             video.muted = false;
             overlay.removeEventListener("click", unmuteClick);
           }, {once:true});
-        });
+        }).catch(function(){}); // intro przerwane (pominięte) zanim ruszyło — to nie błąd
     });
   }
 })();
@@ -8538,7 +8538,7 @@ const RB={bi:6.35,bo:15.9,ti:99,to:107,di:162,dd:170};
 const CAL_BOARD=[[0,170],[170,0],[0,-170],[-170,0]]; // 20, 6, 3, 11 (oś Y w górę)
 const CAL_LBL=['20','6','3','11'];
 const CRICKET=[15,16,17,18,19,20,25];
-const APP_VER='2026.11.21-2'; // wersja rozpoznawania (trafia do zgłoszeń)
+const APP_VER='2026.11.22-1'; // wersja rozpoznawania (trafia do zgłoszeń)
 const LS='dm_autocam_v1', WORK_W=800, TICK=90, STABLE_N=3, ROI_K=1.45;
 
 const S={bgCal:true,learn:true,collectReports:true,fallDetect:true,occl:false,sayDarts:true,voice:'',unsureMm:2.5,hideComp:false,pointLen:27,autoCal:true,zoom:1,thr:40,tipDir:'auto',autoConfirm:true,debug:false,lockExp:true,deviceId:''};
@@ -8579,7 +8579,15 @@ function poseFrom(H,w,h){
   return{f,cx,cy,r1,r2,r3,t};
 }
 // kierunek (w px obrazu), w którym lotka wystaje z tarczy w punkcie (bx,by) mm
-function outDir(bx,by){
+// outDir0 = czysta geometria (lotka prostopadła do tarczy); outDir = poprawiony o wyuczony kąt (lotki wbijają się ukośnie, a kalibracja ma błąd pozy).
+// Zgłoszenia 22.11.2026: prawdziwa oś lotek była obrócona o ~+7° względem outDir0 → dolepianie lufki i doliczanie ukrytego grota szły obok lotki.
+function outDir(bx,by){const o=outDir0(bx,by),a=axDev();if(!o||!a)return o;const c=Math.cos(a),s=Math.sin(a);return[o[0]*c-o[1]*s,o[0]*s+o[1]*c,o[2]];}
+let AXD=null;
+function axDev(){if(AXD!==null)return AXD;const a=Array.isArray(S.axD)?S.axD.filter(v=>isFinite(v)):[];
+  if(a.length<3){AXD=0;return 0;}const q=a.slice().sort((x,y)=>x-y);AXD=Math.max(-0.35,Math.min(0.35,q[q.length>>1]));return AXD;}
+// pomiar z dobrze widocznej lotki: kąt między dopasowaną linią lufki a obecnym outDir (rad)
+function axLearn(dev){if(!isFinite(dev)||Math.abs(dev)>0.45)return;const v=axDev()+dev;S.axD=(Array.isArray(S.axD)?S.axD:[]).concat([+v.toFixed(4)]).slice(-15);AXD=null;saveCfg();}
+function outDir0(bx,by){
   const P=GEO&&GEO.pose;if(!P)return null;
   const pr=(X)=>X[2]>1e-6?[P.f*X[0]/X[2]+P.cx,P.f*X[1]/X[2]+P.cy]:null;
   const A=[0,1,2].map(k=>P.r1[k]*bx+P.r2[k]*by+P.t[k]),B=A.map((v,k)=>v+P.r3[k]*120);
@@ -8718,7 +8726,8 @@ function analyzeDiff(cur,base,exclude){
     const dx=c.cx-main.cx,dy=c.cy-main.cy,dist=Math.hypot(dx,dy);
     const perp=Math.abs(dx*ax[1]-dy*ax[0]); // odległość od osi głównej plamy
     const perpG=od?Math.abs(dx*od[1]-dy*od[0]):1e9; // odległość od osi lotki z geometrii kamery
-    if(!(dist<GEO.rpx*0.35||(dist<GEO.rpx*1.1&&Math.min(perp,perpG)<Math.max(6,dist*0.3))))continue;
+    const perpC=collinear(c,main.cx,main.cy,od); // wydłużony kawałek (lufka), którego własna oś celuje w główną plamę (piórka)
+    if(!(dist<GEO.rpx*0.35||(dist<GEO.rpx*1.1&&(Math.min(perp,perpG)<Math.max(6,dist*0.3)||perpC<Math.max(5,dist*0.12)))))continue;
     let a0=t0,a1=t1;for(const i of c.px){const t=(i%rwq-main.cx)*axU[0]+(((i/rwq)|0)-main.cy)*axU[1];if(t<a0)a0=t;if(t>a1)a1=t;}
     if(a1-a0>Lmax)continue; // za długo jak na jedną lotkę → to coś innego (cień, krawędź, ręka)
     {let c0=1e9,c1=-1e9;for(const i of c.px){const t=(i%rwq-main.cx)*axU[0]+(((i/rwq)|0)-main.cy)*axU[1];if(t<c0)c0=t;if(t>c1)c1=t;}
@@ -8726,6 +8735,15 @@ function analyzeDiff(cur,base,exclude){
      if(gap>gapMax)continue;} // przerwa większa niż trzonek lotki → osobny obiekt
     t0=a0;t1=a1;px=px.concat(c.px);}
   return{total,px,m,raw:m.raw,soft:m.soft,exclFrac};
+}
+// lufka oddzielona od piórek (ciemna lufka na ciemnym polu, przerwa w masce): jej własna oś przechodzi przez piórka.
+// Zgłoszenia 22.11.2026: przy osi z geometrii obróconej o ~10° lufka nie była dołączana i grot lądował 30–60 mm obok.
+function collinear(c,X,Y,od){
+  if(c.n<20)return 1e9;const rw=GEO.rw;let a=0,b=0,q=0;for(const i of c.px){const dx=i%rw-c.cx,dy=((i/rw)|0)-c.cy;a+=dx*dx;b+=dy*dy;q+=dx*dy;}
+  const tr=a+b,dt=Math.sqrt(Math.max(0,(a-b)*(a-b)/4+q*q)),el=Math.sqrt((tr/2+dt)/Math.max(1e-6,tr/2-dt));if(el<1.8)return 1e9;
+  const th=0.5*Math.atan2(2*q,a-b),ex=Math.cos(th),ey=Math.sin(th);
+  if(od&&Math.abs(ex*od[0]+ey*od[1])<0.5)return 1e9; // oś kawałka musi być zbliżona do osi lotki (±60°: lotki wbijają się ukośnie) — nie druty w poprzek
+  return Math.abs((X-c.cx)*ey-(Y-c.cy)*ex);
 }
 function tipOf(px,raw,useGeo,soft){
   const rw=GEO.rw,n=px.length;let mx=0,my=0;
@@ -8755,7 +8773,7 @@ function tipOf(px,raw,useGeo,soft){
   if(!geoOk&&(S.tipDir==='auto'||S.tipDir==='narrow'))useMin=cMin<cMax; // grot = węższy koniec
   else if(S.tipDir==='__force')useMin=FORCE_MIN;
   else if(!geoOk&&['down','up','left','right'].includes(S.tipDir)){const d={down:[0,1],up:[0,-1],left:[-1,0],right:[1,0]}[S.tipDir];useMin=(tmin*ex*d[0]+tmin*ey*d[1])>(tmax*ex*d[0]+tmax*ey*d[1]);}
-  HC_ADD=false;
+  HC_ADD=false;FDEV=null;FEL=0;
   const lim=Math.max(1.5,L*0.03);let sx=0,sy=0,c=0;
   if(geoAx){ // szukaj grota w wąskim korytarzu wzdłuż osi lotki (omija skrzydełka piórek)
     const cor=Math.max(3,GEO.rpx*0.03);let tm=1e9;const inC=new Uint8Array(n),pp=new Float32Array(n);
@@ -8782,7 +8800,8 @@ function tipOf(px,raw,useGeo,soft){
       const tr=a+b,dt=Math.sqrt(Math.max(0,(a-b)*(a-b)/4+cc*cc)),el=Math.sqrt((tr/2+dt)/Math.max(1e-6,tr/2-dt));
       if(e2x*ex+e2y*ey<0){e2x=-e2x;e2y=-e2y;}
       if(el>2.5&&(e2x*ex+e2y*ey)>0.8){ // to faktycznie linia zgodna z osią lotki
-        const t=(tx-cx)*e2x+(ty-cy)*e2y;tx=cx+e2x*t;ty=cy+e2y*t;fx=e2x;fy=e2y;}
+        const t=(tx-cx)*e2x+(ty-cy)*e2y;tx=cx+e2x*t;ty=cy+e2y*t;fx=e2x;fy=e2y;
+        FDEV=Math.atan2(ex*e2y-ey*e2x,ex*e2x+ey*e2y);FEL=el;}
     }
   }
   // cienki grot znika po filtrze — idziemy dalej wzdłuż osi po surowej masce
@@ -8799,24 +8818,40 @@ function tipOf(px,raw,useGeo,soft){
     // KOMPENSACJA PARALAKSY: ile cienkiego grota widać przed lufką? brakujący odcinek dolicz wzdłuż osi lotki
     if(geoAx){const[nx,ny]=workToNorm(tx,ty),bb=ap(GEO.Hi,nx,ny),od=bb?outDir(bb[0],bb[1]):null;
       if(od){const ppm=od[2]/120,Lexp=(S.pointLen||25)*ppm,cosA=Math.abs(dx*od[0]+dy*od[1]);
-        if(S.hideComp&&Lexp>=3&&cosA>0.7){
+        const m0=visLen(px,tx,ty,dx,dy),Lf0=od[2]*lenRatio();
+        if(cosA>0.7&&m0<Lf0*0.4){
+          // widać najwyżej 40% lotki (same piórka: lufka zlała się z tarczą albo schowała za inną lotką) → grot z długości całej lotki,
+          // niezależnie od tego, co „wygląda” na cienki grot przed piórkami (bywa to krawędź sąsiedniej lotki)
+          const q=extendTip(tx,ty,dx,dy,px,(Lf0-m0)*cosA);tx+=dx*q.add;ty+=dy*q.add;LAST_FIX=Math.round(q.add/ppm);HC_ADD=true;
+        }else if(S.hideComp&&Lexp>=3&&cosA>0.7){
           const N=Math.round(Lexp*1.8)+6,prof=[];
           for(let k=0;k<=N;k++){const cx=tx-dx*k,cy=ty-dy*k;let w=0;
             for(let q=-9;q<=9;q++){const x=Math.round(cx-dy*q),y=Math.round(cy+dx*q);if(x>=0&&y>=0&&x<rw&&y<rh&&raw[y*rw+x])w++;}prof.push(w);}
           const wmax=Math.max(...prof);
           if(wmax>=4){const thrW=Math.max(3,wmax*0.55);let vis=prof.findIndex(w=>w>=thrW);if(vis<0)vis=N;
             const tipThin=prof[0]+prof[1]+prof[2]<=thrW*1.2; // na samym końcu brak cienkiego grota?
-            if((vis<=3&&!tipThin||vis<=2)&&hcShort(px,tx,ty,dx,dy,od,(Lexp-vis)*cosA)){const add=(Lexp-vis)*cosA;tx+=dx*add;ty+=dy*add;LAST_FIX=Math.round(add/ppm);HC_ADD=true;}else LAST_FIX=0;}
+            if((vis<=3&&!tipThin||vis<=2)&&hcShort(px,tx,ty,dx,dy,od,(Lexp-vis)*cosA)){
+              // widoczna mniej niż ~55% lotki: brakuje nie tylko grota, ale i części lufki → dolicz brakującą długość CAŁEJ lotki (tył piórek − długość lotki)
+              const m=visLen(px,tx,ty,dx,dy),Lf=od[2]*lenRatio();let add=Math.max((Lexp-vis)*cosA,(Lf-m)*cosA);
+              if(add>(Lexp-vis)*cosA+2){const q=extendTip(tx,ty,dx,dy,px,add);add=q.add;}
+              tx+=dx*add;ty+=dy*add;LAST_FIX=Math.round(add/ppm);HC_ADD=true;}else LAST_FIX=0;}
         }}}
   }
-  return{x:tx,y:ty,elong,ax:[ex,ey],useMin,tmin,tmax,mx,my,geo:geoAx||geoOk,hc:HC_ADD};
+  return{x:tx,y:ty,elong,ax:[ex,ey],useMin,tmin,tmax,mx,my,geo:geoAx||geoOk,hc:HC_ADD,fdev:FDEV,fel:FEL};
 }
 function tipOfForced(px,raw,useMin){
   const d=S.tipDir;S.tipDir='__force';FORCE_MIN=useMin;try{return tipOf(px,raw,false);}finally{S.tipDir=d;}
 }
-let FORCE_MIN=false,LAST_FIX=0,HC_ADD=false;
+let FORCE_MIN=false,LAST_FIX=0,HC_ADD=false,FDEV=null,FEL=0;
 // kompensacja ukrytego grota tylko wtedy, gdy lotka na obrazie jest wyraźnie KRÓTSZA niż zwykle (przód lotki faktycznie schowany).
 // Bez tego warunku dokładała ~25 mm do co drugiej lotki z widocznym grotem (zgłoszenia 20.11.2026: 19→3, 3→17, 20→5).
+// widoczna długość lotki: od grota (tx,ty) do tyłu piórek wzdłuż osi (dx,dy = kierunek do grota)
+function visLen(px,tx,ty,dx,dy){const rw=GEO.rw;let m=0;for(const i of px){const t=(tx-i%rw)*dx+(ty-((i/rw)|0))*dy;if(t>m)m=t;}return m;}
+// doliczenie ukrytej części lotki: skala (px/mm) zmienia się wzdłuż tarczy, więc długość liczymy w miejscu nowego grota (2 iteracje)
+function extendTip(tx,ty,dx,dy,px,add){const m=visLen(px,tx,ty,dx,dy);
+  for(let k=0;k<2;k++){const[nx,ny]=workToNorm(tx+dx*add,ty+dy*add),bb=ap(GEO.Hi,nx,ny),o2=bb?outDir(bb[0],bb[1]):null;if(!o2)break;
+    const cosA=Math.abs(dx*o2[0]+dy*o2[1]);const a2=(o2[2]*lenRatio()-m)*cosA;if(!(a2>0))break;add=a2;}
+  return{add};}
 function hcShort(px,tx,ty,dx,dy,od,add){
   if(!od||!(add>0))return false;const rw=GEO.rw;let m=0;
   for(const i of px){const t=(tx-i%rw)*dx+(ty-((i/rw)|0))*dy;if(t>m)m=t;} // grot → tył piórek
@@ -9199,14 +9234,25 @@ function analyze(cur){
   const fineB=GEO?ap(GEO.Hi,nx,ny):null;
   {const q=fineApply(nx,ny);if(q[0]!==nx||q[1]!==ny){const sc2=normToScore(q[0],q[1]);if(sc2.lbl!==sc.lbl)lg('dostrojenie: '+sc.lbl+' → '+sc2.lbl);nx=q[0];ny=q[1];sc=sc2;}}
   if(!turn.length)turnKey0=tkey();
-  const d={px:r.px,before:ref,tip:[nx,ny],rawTip,rawB,fineB,sc,unsure:unsureOf(nx,ny,sc)};
-  if(GRP&&GEO){const b=ap(GEO.Hi,nx,ny);if(b&&turn.some(t=>{if(t.fell||!t.tip)return false;const q=ap(GEO.Hi,t.tip[0],t.tip[1]);return q&&Math.hypot(q[0]-b[0],q[1]-b[1])<4;})){
-    lg('to poruszona wcześniejsza lotka (grot w tym samym miejscu) — pomijam');ref=cur;status('Czekam na kolejną lotkę','#00ff88');return;}}
+  // grot przy drucie: wybór pola = prawdopodobieństwo z geometrii × rozkład trafień tego gracza (bez pytania gracza)
+  let uns=unsureOf(nx,ny,sc),PRIF=null;
+  if(uns&&gm()!=='bull'){const ch=priChoose(sc,uns,plName());if(ch){PRIF={from:sc.lbl,to:ch.flip?uns.lbl:sc.lbl,post:+ch.post.toFixed(3),dmm:+uns._d.toFixed(2)};
+    if(ch.flip){lg('rozkład trafień: '+sc.lbl+' → '+uns.lbl+' (grot '+uns._d.toFixed(1)+' mm od drutu, pewność '+Math.round(ch.post*100)+'%)');const o=sc;sc=uns;uns=o;}}}
+  const d={px:r.px,before:ref,tip:[nx,ny],rawTip,rawB,fineB,sc,unsure:uns,pl:plName(),prif:!!(PRIF&&PRIF.from!==PRIF.to)};
+  // poruszona wcześniejsza lotka (obrót piórek, opadnięcie) czy nowa lotka w ciasnej grupie?
+  // Dawniej: „grot w promieniu 4 mm od wcześniejszego” → odrzucało nowe lotki wbite tuż obok (4 niewykryte w zgłoszeniach 22.11.2026),
+  // a przepuszczało obrócone piórka (5 fałszywych lotek). Teraz: ruch wcześniejszej lotki daje zmianę PRZYLEGAJĄCĄ do jej sylwetki
+  // i małą w porównaniu z lotką; nowa lotka wnosi sporo nowej powierzchni z dala od wcześniejszych.
+  if(GRP){const mv=movedPrev(r.px,excl);if(mv&&mv.moved){
+    lg('to poruszona wcześniejsza lotka ('+mv.farPx+' px nowej powierzchni, '+Math.round(mv.far*100)+'% z dala od lotek) — pomijam');ref=cur;status('Czekam na kolejną lotkę','#00ff88');return;}}
   lg('lotka → '+sc.lbl+' (grot '+Math.round(nx*1000)/10+'%,'+Math.round(ny*1000)/10+'%'+(LAST_FIX?', ukryty grot +'+LAST_FIX+' mm':'')+')');LAST_FIX=0;
   CUR_TIP=[nx,ny];if(!applyDart(sc)){lg('gra odrzuciła rzut');ref=cur;return;}
   if(!OCCF&&!OCC&&!tp.hc&&tp.geo&&tp.elong>3)learnLen(r.px,tp);d.occl=OCCF;
   if(!OCCF){try{d.axi=axisInfo(r.px,tp.x,tp.y);}catch(e){}}
-  hmRec(d);d.after=cur;d.dbg={blob:r.px.length,total:r.total,exclFrac:r.exclFrac,geo:!!tp.geo,elong:tp.elong,ax:tp.ax,thr:effT(),noise:noiseEst,mv:DG.mv,mvThr:DG.mvThr};turn.push(d);ref=cur;refAge=0;lastDartTick=tickN;
+  // nauka kąta osi lotki: cała lotka widoczna (bez zasłonięcia i doliczania grota) → kierunek grot→tył piórek vs outDir
+  if(!OCCF&&!OCC&&!tp.hc&&tp.geo&&tp.elong>2.5&&d.axi){try{const b=ap(GEO.Hi,nx,ny),o=b?outDir(b[0],b[1]):null;
+    if(o&&o[2]>GEO.rpx*0.1){const lr=d.axi.L/o[2];if(lr>0.8&&lr<1.8)axLearn(Math.atan2(o[0]*d.axi.e[1]-o[1]*d.axi.e[0],o[0]*d.axi.e[0]+o[1]*d.axi.e[1]));}}catch(e){}}
+  hmRec(d);d.after=cur;d.dbg={blob:r.px.length,total:r.total,exclFrac:r.exclFrac,geo:!!tp.geo,elong:tp.elong,ax:tp.ax,thr:effT(),noise:noiseEst,mv:DG.mv,mvThr:DG.mvThr,axd:+axDev().toFixed(3),hc:!!tp.hc,prior:PRIF};turn.push(d);ref=cur;refAge=0;lastDartTick=tickN;
   status('🎯 '+sc.lbl+(sc.val?' ('+sc.val+')':''),'#00ff88');sayDart(sc);
   if(d.unsure){lg('niepewne: '+sc.lbl+' / '+d.unsure.lbl+' (grot przy drucie)');unsureAsk(turn.length-1);}
   d.grp=GRP;if(gm()!=='bull'){accAdd('auto');if(GRP||OCCF)occlNote();}
@@ -9220,6 +9266,16 @@ function blobStill(r){ // ile kolejnych odczytów ta sama plama stoi w miejscu (
   const rw=GEO.rw;let sx=0,sy=0;for(const i of r.px){sx+=i%rw;sy+=(i/rw)|0;}const n=r.px.length,cx=sx/n,cy=sy/n,h=STILL;
   const same=h&&Math.abs(n-h.n)<Math.max(n,h.n)*0.12&&Math.hypot(cx-h.cx,cy-h.cy)<GEO.rpx*0.02;
   STILL={n,cx,cy,k:same?h.k+1:0};return STILL.k;
+}
+function movedPrev(px,excl){
+  if(!excl||!px||!px.length)return null;const rw=GEO.rw,rh=GEO.rh,K=4;let far=0;
+  for(const i of px){const x=i%rw,y=(i/rw)|0;let hit=false;
+    for(let dy=-K;dy<=K&&!hit;dy+=2)for(let dx=-K;dx<=K&&!hit;dx+=2){const xx=x+dx,yy=y+dy;if(xx>=0&&yy>=0&&xx<rw&&yy<rh&&excl[yy*rw+xx])hit=true;}
+    if(!hit)far++;}
+  // typowa powierzchnia lotki: mediana wcześniejszych (widocznych w całości) lotek tej tury, inaczej z rozmiaru tarczy
+  const A=turn.filter(d=>!d.fell&&!d.occl&&d.px&&d.px.length>=GEO.minA).map(d=>d.px.length).sort((a,b)=>a-b);
+  const ref=A.length?A[A.length>>1]:GEO.rpx*GEO.rpx*0.085,f=far/px.length;
+  return{far:f,farPx:far,ref:Math.round(ref),moved:far<ref*0.13&&f<0.45};
 }
 function tipBlocked(tp,excl){if(!tp||!excl)return false;const rw=GEO.rw,rh=GEO.rh,x0=Math.round(tp.x),y0=Math.round(tp.y),R=4;let c=0;
   for(let y=y0-R;y<=y0+R;y++)for(let x=x0-R;x<=x0+R;x++){if(x<0||y<0||x>=rw||y>=rh)continue;if((x-x0)*(x-x0)+(y-y0)*(y-y0)>R*R)continue;if(excl[y*rw+x])c++;}return c>=3;}
@@ -9298,7 +9354,10 @@ function looksLikeDart(px,occl){
   const rw=GEO.rw,n=px.length;let mx=0,my=0;for(const i of px){mx+=i%rw;my+=(i/rw)|0;}mx/=n;my/=n;
   const[nx,ny]=workToNorm(mx,my),bb=ap(GEO.Hi,nx,ny);
   if(!bb)return{ok:false,why:'poza tarczą'};
-  if(Math.hypot(bb[0],bb[1])>170*1.35)return{ok:false,why:'daleko poza tarczą'};
+  // środek plamy NIE jest miejscem lotki: piórka wystają z tarczy w stronę kamery, więc ich rzut na płaszczyznę tarczy
+  // ląduje daleko za brzegiem, choć grot siedzi w polu (zgłoszenia 22.11.2026: 8 lotek odrzuconych jako „daleko poza tarczą”).
+  // Liczy się koniec plamy od strony tarczy, a gdy widać tylko tył lotki — miejsce grota z jej długości.
+  if(Math.hypot(bb[0],bb[1])>170*1.35&&!tipNearBoard(px,mx,my,bb))return{ok:false,why:'daleko poza tarczą'};
   const od=outDir(bb[0],bb[1]);
   let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9,t0=1e9,t1=-1e9,q0=1e9,q1=-1e9;
   for(const i of px){const x=i%rw,y=(i/rw)|0;if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y;
@@ -9321,8 +9380,28 @@ function looksLikeDart(px,occl){
   }
   // wypełnienie liczone w ramce wzdłuż osi lotki (lotka ukośna/pozioma w prostokącie x/y wyglądała na „pełną”)
   const fillO=(od&&od[2]>GEO.rpx*0.1)?n/Math.max(1,(t1-t0+1)*(q1-q0+1)):fill;
-  if(Math.min(fill,fillO)>0.6&&n>GEO.minA*3&&!(occl&&n<GEO.maxA*0.5))return{ok:false,why:'pełna plama (cień/ręka?)'}; // same piórka lotki schowanej za inną też są „pełne”
+  if(Math.min(fill,fillO)>0.6&&n>GEO.minA*3&&!(occl&&n<GEO.maxA*0.5)&&!flightLike(od,t1-t0,q1-q0,n))return{ok:false,why:'pełna plama (cień/ręka?)'}; // same piórka lotki schowanej za inną też są „pełne”
   return{ok:true};
+}
+// same piórka z trzonkiem (lufka zlała się z tarczą) to też „pełna plama”, ale rozmiaru piórek: do ~85 mm wzdłuż osi (piórka+trzonek)
+// i ~70 mm w poprzek (rozpiętość piórek z perspektywą). Ręka/ramię są wyraźnie większe. Zgłoszenia 22.11.2026: 3 lotki odrzucone jako „pełna plama”, choć były to piórka nowej lotki.
+function flightLike(od,Lpar,Lper,n){
+  if(!od||!(od[2]>GEO.rpx*0.1))return false;const ppm=od[2]/120,mmPer=GEO.rpx/170;
+  const Lf=85*ppm+8,Wf=70*Math.max(mmPer,ppm*0.6)+8;
+  return Lpar<=Lf&&Lper<=Wf&&n<=Lf*Wf*0.85;
+}
+// czy grot tej plamy może leżeć na tarczy? (koniec od strony tarczy albo grot doliczony z długości lotki)
+function tipNearBoard(px,mx,my,bb){
+  const od=outDir(bb[0],bb[1]);if(!od||!(od[2]>GEO.rpx*0.1))return false;const rw=GEO.rw,LIM=170*1.35;
+  let t0=1e9,t1=-1e9;for(const i of px){const t=(i%rw-mx)*od[0]+(((i/rw)|0)-my)*od[1];if(t<t0)t0=t;if(t>t1)t1=t;}
+  let sx=0,sy=0,c=0;for(const i of px){const x=i%rw,y=(i/rw)|0,t=(x-mx)*od[0]+(y-my)*od[1];if(t<t0+3){sx+=x;sy+=y;c++;}}
+  if(!c)return false;const ex=sx/c,ey=sy/c;
+  const at=(x,y)=>{const[qx,qy]=workToNorm(x,y),b=ap(GEO.Hi,qx,qy);return b?Math.hypot(b[0],b[1]):1e9;};
+  if(at(ex,ey)<=LIM)return true;
+  // widać tylko tył lotki: grot = tył piórek − długość lotki
+  let L=od[2]*lenRatio(),hid=L-(t1-t0);if(hid<=0)return false;
+  for(let k=0;k<2;k++){const[qx,qy]=workToNorm(ex-od[0]*hid,ey-od[1]*hid),b=ap(GEO.Hi,qx,qy),o2=b?outDir(b[0],b[1]):null;if(!o2)break;hid=o2[2]*lenRatio()-(t1-t0);if(hid<=0)return false;}
+  return at(ex-od[0]*hid,ey-od[1]*hid)<=LIM;
 }
 // przesunięcie całego obrazu (wstrząs tarczy/statywu przy wbiciu lotki) — szukamy w zakresie ±3 px
 function estShift(cur,base){
@@ -9352,7 +9431,7 @@ function unsureOf(nx,ny,sc){
   for(const R of[RB.bi,RB.bo,RB.ti,RB.to,RB.di,RB.dd]){const d=Math.abs(r-R);if(d<M&&(!best||d<best.d)){const r2=R+(r<R?1:-1)*1.5,k=r2/Math.max(r,1e-6);best={d,x:x*k,y:y*k};}}
   if(r>RB.bo+0.5&&r<RB.dd+3){const a=((Math.atan2(x,y)*180/Math.PI)+360)%360,w=Math.round((a+9)/18)*18-9,da=a-w,d=Math.abs(r*Math.sin(da*Math.PI/180));
     if(d<M&&(!best||d<best.d)){const a2=(w-(da>0?1:-1)*(1.5/r)*180/Math.PI)*Math.PI/180;best={d,x:Math.sin(a2)*r,y:Math.cos(a2)*r};}}
-  if(!best)return null;const alt=scoreAt(best.x,best.y);return alt.lbl!==sc.lbl?alt:null;
+  if(!best)return null;const alt=scoreAt(best.x,best.y);if(alt.lbl===sc.lbl)return null;alt._d=best.d;return alt;
 }
 function callout(sc){if(!sc)return'';if(sc.n===50)return'Bullseye';if(sc.n===25)return'Twenty five';if(!sc.n)return'Miss';
   return(sc.m===3?'Treble ':sc.m===2?'Double ':'')+sc.n;}
@@ -9448,7 +9527,7 @@ try{const o=JSON.parse(localStorage.getItem(LKEY)||'null');if(o&&Array.isArray(o
 function lrnSave(){try{localStorage.setItem(LKEY,JSON.stringify(LRN));}catch(e){}lrnUI();}
 function calDiff(a,b){if(!a||!b)return 1;let m=0;for(let i=0;i<4;i++)m=Math.max(m,Math.hypot(a[i][0]-b[i][0],a[i][1]-b[i][1]));return m;}
 // nowa kalibracja: jeśli telefon wyraźnie się przesunął, stare korekty nie pasują → zaczynamy od nowa
-function lrnOnCal(){if(!CAL)return;if(LRN.cal&&calDiff(LRN.cal,CAL.pts)>0.02&&LRN.samples.length){LRN.samples=[];lg('nauka: nowe ustawienie telefonu — zaczynam od nowa');}LRN.cal=CAL.pts.map(p=>p.slice());lrnSave();}
+function lrnOnCal(){if(!CAL)return;if(LRN.cal&&calDiff(LRN.cal,CAL.pts)>0.02){S.axD=[];AXD=null;saveCfg();}if(LRN.cal&&calDiff(LRN.cal,CAL.pts)>0.02&&LRN.samples.length){LRN.samples=[];lg('nauka: nowe ustawienie telefonu — zaczynam od nowa');}LRN.cal=CAL.pts.map(p=>p.slice());lrnSave();}
 // środek pola (n,m) najbliższy punktowi P — do szacowania błędu, gdy poprawka była wyborem pola
 function nearestInField(P,sc,mg){
   const r=Math.hypot(P[0],P[1])||1e-6,a=Math.atan2(P[0],P[1]);let r0,r1;
@@ -9513,7 +9592,7 @@ function fineEstimate(){
   FINE.off=g>=Math.max(3,H.length*0.015)?[best[1],best[2]]:[0,0];
 }
 function fineRecord(darts){
-  let n=0;for(const d of darts){if(!d||d.fell||d.occl||!d.fineB||!d.sc||d.sc.lbl==='MISS')continue;
+  let n=0;for(const d of darts){if(!d||d.fell||d.occl||d.prif||!d.fineB||!d.sc||d.sc.lbl==='MISS')continue;
     FINE.h.push([+d.fineB[0].toFixed(1),+d.fineB[1].toFixed(1),d.sc.lbl]);n++;}
   if(!n)return;if(FINE.h.length>300)FINE.h=FINE.h.slice(-300);if(!FINE.cal&&CAL)FINE.cal=CAL.pts.map(p=>p.slice());
   const old=FINE.off.join();fineEstimate();fineSave();
@@ -9523,6 +9602,36 @@ function fineApply(nx,ny){
   if(S.learn===false||(!FINE.off[0]&&!FINE.off[1]))return[nx,ny];const b=ap(GEO.Hi,nx,ny);if(!b)return[nx,ny];
   const p=ap(GEO.H,b[0]+FINE.off[0],b[1]+FINE.off[1]);return p?[p[0],p[1]]:[nx,ny];
 }
+/* ===== ROZKŁAD TRAFIEŃ GRACZA (prior do decyzji przy drucie) =====
+   Dla każdego gracza liczymy w localStorage (klucz dm_ac_prior), ile razy jego lotka skończyła w danym polu:
+   acc = pole przyjęte bez poprawki, fix = pole wskazane poprawką gracza. Gdy grot leży bliżej drutu niż „niepewność” (unsureMm),
+   wybieramy pole o większym prawdopodobieństwie a posteriori: P(strona drutu | odległość, błąd grota σ) × P(pole | gracz).
+   Gracz celujący w 20 → lotka 0,5 mm za drutem po stronie 1 zostaje policzona jako 20, ale 2 mm za drutem już jako 1. */
+const PKEY='dm_ac_prior',PRI_SIG=1.2,PRI_GAM=0.5,PRI_MIN=30;let PRI=null;
+// prior = GĘSTOŚĆ trafień w polu (liczba / powierzchnia pola), bo przy drucie porównujemy dwa sąsiednie miejsca, a nie całe pola
+// (pojedyncze 20 jest 8× większe od T20 — same liczby faworyzowałyby je bez sensu). Wykładnik 0,5 = ostrożność: rozkład w polu nie jest
+// równomierny, a przy drucie gęstości po obu stronach są podobne. σ i wykładnik dobrane na 83 lotkach „przy drucie” ze zgłoszeń 22.11.2026.
+function priArea(l){const P=Math.PI;if(l==='BULL')return P*RB.bi*RB.bi;if(l==='25')return P*(RB.bo*RB.bo-RB.bi*RB.bi);if(l==='MISS')return P*(230*230-RB.dd*RB.dd);
+  if(l[0]==='T')return P/20*(RB.to*RB.to-RB.ti*RB.ti);if(l[0]==='D')return P/20*(RB.dd*RB.dd-RB.di*RB.di);return P/20*(RB.ti*RB.ti-RB.bo*RB.bo+RB.di*RB.di-RB.to*RB.to);}
+function priSave(){try{localStorage.setItem(PKEY,JSON.stringify(PRI));}catch(e){}}
+function priPl(name){const k=name||'_';if(!PRI.p[k])PRI.p[k]={acc:{},fix:{}};return PRI.p[k];}
+function priLoad(){if(PRI)return PRI;try{PRI=JSON.parse(localStorage.getItem(PKEY)||'null');}catch(e){PRI=null;}
+  if(!PRI||typeof PRI!=='object'||!PRI.p||typeof PRI.p!=='object')PRI={v:1,p:{}};
+  if(!PRI.boot){PRI.boot=1;try{hmLoad().forEach(h=>{if(h&&h.l&&h.m!=='bull'){const q=priPl(h.p||'');q.acc[h.l]=(q.acc[h.l]||0)+1;}});}catch(e){}priSave();} // start z historii mapy trafień
+  return PRI;}
+function plName(){try{return String((typeof G!=='undefined'&&G&&G.players&&G.players[G.cp])||'');}catch(e){return'';}}
+function priN(q){let n=0;for(const k in q.acc)n+=q.acc[k];for(const k in q.fix)n+=q.fix[k];return n;}
+function priRecord(darts){try{if(gm()==='bull'||!darts||!darts.length)return;priLoad();let ch=false;
+  for(const d of darts){if(!d||d.fell||d._pr||!d.sc||!d.sc.lbl)continue;d._pr=1;const q=priPl(d.pl!=null?d.pl:plName()),l=d.sc.lbl;
+    if(d._fx||d.manual)q.fix[l]=(q.fix[l]||0)+1;else q.acc[l]=(q.acc[l]||0)+1;ch=true;
+    if(priN(q)>3000){for(const k in q.acc)q.acc[k]=Math.round(q.acc[k]/2);for(const k in q.fix)q.fix[k]=Math.round(q.fix[k]/2);}} // stare rzuty ważą mniej
+  if(ch)priSave();}catch(e){}}
+function priPhi(z){const t=1/(1+0.2316419*Math.abs(z)),d=0.3989423*Math.exp(-z*z/2),p=d*t*(0.3193815+t*(-0.3565638+t*(1.781478+t*(-1.821256+t*1.330274))));return z>0?1-p:p;}
+// sc = pole z geometrii, un = pole po drugiej stronie najbliższego drutu (un._d = odległość grota od drutu w mm)
+function priChoose(sc,un,pl){try{if(S.learn===false||!un||!(un._d>=0))return null;priLoad();const q=priPl(pl),N=priN(q);if(N<PRI_MIN)return null;
+  const K=62,pi=l=>Math.pow(((q.acc[l]||0)+(q.fix[l]||0)+1)/(N+K)/priArea(l),PRI_GAM);
+  const p=priPhi(un._d/PRI_SIG),a=(1-p)*pi(un.lbl),b=p*pi(sc.lbl);
+  return a>b?{flip:true,post:a/(a+b)}:{flip:false,post:b/(a+b)};}catch(e){return null;}}
 /* ================= ZGŁOSZENIA POMYŁEK ================= */
 const RPT={mem:[],db:null,cnt:0,toastShown:false};
 function idb(){return new Promise(res=>{if(RPT.db)return res(RPT.db);try{const q=indexedDB.open('dartsmaster_reports',1);
@@ -9578,6 +9687,7 @@ async function rptExport(){
 function confirmClear(){return RPT.cnt?window.confirm('Usunąć '+RPT.cnt+' zgłoszeń?'):true;}
 function takeout(cur){
   try{fineRecord(turn);}catch(e){}
+  try{priRecord(turn);}catch(e){}
   if(S.autoConfirm&&turn.length)confirmTurn();
   bgCalSoon('po wyjęciu lotek',45000);
   turn=[];turnKey0=null;closed=false;sumDarts=[];ref=cur;empty=cur;lastMask=null;TOB=0;unsureHide();
