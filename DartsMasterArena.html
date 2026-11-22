@@ -22,7 +22,7 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-  import { getFirestore, collection, doc, setDoc, getDoc, getDocs, updateDoc, onSnapshot, deleteDoc, deleteField, serverTimestamp, query, orderBy, limit, where, addDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import { getFirestore, collection, doc, setDoc, getDoc, getDocs, updateDoc, onSnapshot, deleteDoc, deleteField, serverTimestamp, query, orderBy, limit, where, addDoc, runTransaction, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyDDq0DXwafzw8KiSfl-HofLPJ_BuCSrttk",
@@ -38,7 +38,7 @@
   const db = getFirestore(app);
 
   // Eksportuj do window żeby reszta kodu miała dostęp
-  window._fb = { auth, db, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, sendPasswordResetEmail, collection, doc, setDoc, getDoc, getDocs, updateDoc, onSnapshot, deleteDoc, deleteField, serverTimestamp, query, orderBy, limit, where, addDoc };
+  window._fb = { auth, db, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, sendPasswordResetEmail, collection, doc, setDoc, getDoc, getDocs, updateDoc, onSnapshot, deleteDoc, deleteField, serverTimestamp, query, orderBy, limit, where, addDoc, runTransaction, arrayUnion, arrayRemove };
 
   // Śledź stan logowania
   onAuthStateChanged(auth, user => {
@@ -774,7 +774,7 @@ input{outline:none}
     </div>
     <div class="menu-item" onclick="closeMenu(); if(window.AutoCam)AutoCam.exportReports()">
       <span class="menu-item-icon">🐞</span>
-      <span>Wyślij zgłoszenia <b id="menu-rpt-cnt" style="color:#ffd700"></b></span>
+      <span>Pobierz zgłoszenia (plik) <b id="menu-rpt-cnt" style="color:#ffd700"></b></span>
     </div>
     <div class="menu-item" id="menu-rpt-clear" style="display:none" onclick="closeMenu(); if(window.AutoCam)AutoCam.clearReports()">
       <span class="menu-item-icon">🗑</span>
@@ -808,7 +808,7 @@ input{outline:none}
     <div style="margin-top:20px">
       <!-- Sound slot: 180 -->
       <div class="sound-slot">
-        <div class="sound-slot-label">🎯 Wynik 180 (Zero-One-Eighty)</div>
+        <div class="sound-slot-label">🎯 Wynik 180 (One Hundred and Eighty)</div>
         <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
           <input type="file" id="input-s180" accept="audio/*" onchange="handleSoundUpload(event,'s180')" style="display:none">
           <button class="btn btn-secondary" onclick="document.getElementById('input-s180').click()" style="flex:1;margin-top:0">📁 Wgraj audio</button>
@@ -909,7 +909,7 @@ input{outline:none}
         <div><b>Bob's 27</b><small>trening doubli 1–20 + bull</small></div>
         <div><b>121 Checkout</b><small>zejścia od 121 w górę</small></div>
       </div>
-      <p>💪 <b>Trening</b> — 8 ćwiczeń: celność, double, checkout, Shanghai, Power Scoring, 9-Dart Finish i inne.</p>
+      <p>💪 <b>Trening</b> — 8 ćwiczeń: celność, double, checkout, Shanghai, mocne punktowanie, 9-Dart Finish i inne.</p>
     </div>
 
     <div class="ab-sec" style="--ac:#00e5ff">
@@ -1083,7 +1083,7 @@ input{outline:none}
     <div class="th-tgs">
       <div class="th-tg" onclick="togDOut()" role="switch">
         <div class="th-tt"><b>Double-Out</b><small>na koniec</small></div>
-        <div class="toggle" id="tog-dout"><div class="toggle-knob"></div></div>
+        <div class="toggle on" id="tog-dout"><div class="toggle-knob"></div></div>
       </div>
       <div class="th-tg" onclick="togDIn()" role="switch">
         <div class="th-tt"><b>Double-In</b><small>na start</small></div>
@@ -1181,8 +1181,8 @@ input{outline:none}
   </div>
 
   <div class="checkout-hint" id="co-hint">
-    <div style="font-family:monospace;font-size:9px;color:#ffd700;letter-spacing:2px;margin-bottom:2px">💡 CHECKOUT</div>
-    <div id="co-val" style="font-family:'Bebas Neue',cursive;font-size:20px;color:#ffd700;letter-spacing:2px"></div>
+    <div style="font-family:monospace;font-size:9px;color:#ffd700;letter-spacing:2px;white-space:nowrap">💡 CHECKOUT</div>
+    <div id="co-val" style="font-family:'Bebas Neue',cursive;font-size:20px;color:#ffd700;letter-spacing:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
   </div>
 
   <!-- X01 TRYB SUMARYCZNY -->
@@ -1217,7 +1217,7 @@ input{outline:none}
         
         <!-- ROW 4 -->
         <button onclick="undoSum()" style="padding:22px 8px;background:rgba(255,140,0,.1);border:1px solid rgba(255,140,0,.3);border-radius:8px;color:#ff8c00;font-family:'Bebas Neue',cursive;font-size:20px;font-weight:700;cursor:pointer">↶</button>
-        <button onclick="undoTurn()" style="padding:22px 8px;background:rgba(255,60,60,.1);border:1px solid rgba(255,60,60,.3);border-radius:8px;color:#ff3c3c;font-family:'Bebas Neue',cursive;font-size:20px;font-weight:700;cursor:pointer">CLR</button>
+        <button onclick="clearSum()" style="padding:22px 8px;background:rgba(255,60,60,.1);border:1px solid rgba(255,60,60,.3);border-radius:8px;color:#ff3c3c;font-family:'Bebas Neue',cursive;font-size:20px;font-weight:700;cursor:pointer">CLR</button>
         <button onclick="addSum(0)" style="padding:22px 8px;background:#1a1a26;border:1px solid #2a2a40;border-radius:8px;color:#e8e8f0;font-family:'Bebas Neue',cursive;font-size:24px;font-weight:700;cursor:pointer">0</button>
         <button onclick="confirmSum()" style="padding:22px 8px;background:linear-gradient(135deg,#ff3c3c,#cc1f1f);border:none;border-radius:8px;color:#fff;font-family:'Bebas Neue',cursive;font-size:20px;font-weight:700;cursor:pointer;grid-column:4/6">POTWIERDŹ</button>
       </div>
@@ -1452,6 +1452,9 @@ input{outline:none}
 </style>
 
 <script>
+// Zabezpieczenie tekstu wstawianego do HTML (nicki, nazwy pokoi itp.)
+window.escH=s=>String(s==null?'':s).replace(/[&<>"'`]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','`':'&#96;'}[c]));
+window.safeNick=s=>String(s==null?'':s).replace(/[<>"`\\]/g,'').replace(/\s+/g,' ').trim().slice(0,20);
 // ===== SLIDE MENU =====
 function toggleMenu(){
   const menu = document.getElementById('slide-menu');
@@ -2276,20 +2279,20 @@ const CO={
   161:"T20 T17 Bull",164:"T20 T18 Bull",167:"T20 T19 Bull",170:"T20 T20 Bull"
 };
 const EX=[
-  {id:1,cat:'precision',name:'Round the World',icon:'🌍',diff:'easy',desc:'Traf każdy numer od 1 do 20 po kolei. Liczy się każde trafienie jedną strzałką.',targets:['1–20 kolejno']},
-  {id:2,cat:'precision',name:'Treble Training',icon:'🎯',diff:'hard',desc:'Traf T20 tyle razy ile możesz w 20 rzutach. Cel: 10+ trafień.',targets:['T20 × 20 rzutów']},
+  {id:1,cat:'precision',name:'Dookoła tarczy',icon:'🌍',diff:'easy',desc:'Traf każdy numer od 1 do 20 po kolei. Liczy się każde trafienie jedną strzałką.',targets:['1–20 kolejno']},
+  {id:2,cat:'precision',name:'Trening potrójnych',icon:'🎯',diff:'hard',desc:'Traf T20 tyle razy ile możesz w 20 rzutach. Cel: 10+ trafień.',targets:['T20 × 20 rzutów']},
   {id:3,cat:'checkout',name:'Checkout 170→2',icon:'💰',diff:'hard',desc:'Ćwicz finisz od 170 w dół do 2. Każdy wynik próbuj zakończyć jednym zestawem.',targets:['170','130','100','60','40','20','2']},
   {id:4,cat:'precision',name:'Double Train',icon:'⚡',diff:'medium',desc:'Traf każdy double od D1 do D20. Po trafieniu przejdź do następnego.',targets:['D1 do D20']},
   {id:5,cat:'precision',name:'Shanghai',icon:'🎪',diff:'medium',desc:'Traf single, double i triple danego numeru w jednej rundzie (3 rzuty). Zacznij od 1.',targets:['S+D+T każdego numeru']},
-  {id:6,cat:'checkout',name:'Power Scoring',icon:'⚡',diff:'medium',desc:'Cel: 3 rzuty, minimum 100 punktów. Rób to przez 10 rund i licz średnią.',targets:['100+/runda','10 rund']},
+  {id:6,cat:'checkout',name:'Mocne punktowanie',icon:'⚡',diff:'medium',desc:'Cel: 3 rzuty, minimum 100 punktów. Rób to przez 10 rund i licz średnią.',targets:['100+/runda','10 rund']},
   {id:7,cat:'checkout',name:'Madhouse (D1)',icon:'😈',diff:'hard',desc:'Zakończ na D1 – najzimniejszy double. Świetne ćwiczenie precyzji pod presją.',targets:['D1']},
-  {id:8,cat:'precision',name:'9-Dart Finish',icon:'🏆',diff:'hard',desc:'Spróbuj ukończyć 501 w 9 rzutach: T20×6, T19, D12.',targets:['T20×6','T19','D12']},
+  {id:8,cat:'precision',name:'9-Dart Finish',icon:'🏆',diff:'hard',desc:'Spróbuj ukończyć 501 w 9 lotkach: 7× T20, potem T19 i D12 (420+57+24=501).',targets:['T20×7','T19','D12']},
 ];
 
 // ===== STATE =====
 let G = {
   mode:'501', players:['Gracz 1','Gracz 2'],
-  dOut:false, dIn:false,
+  dOut:true, dIn:false,
   legs:3,                          // total legs to play
   legWins:[],                      // leg wins per player
   currentLeg:1,
@@ -2539,6 +2542,7 @@ function confirmSum(){
       toast('Liczba musi być 1-180!');
       return;
     }
+    if([163,166,169,172,173,175,176,178,179].indexOf(liczba)>-1){toast('❌ Niemożliwy wynik: '+liczba);clearSum();return;}
     
     // Dodaj do historii
     const hist = document.getElementById('sum-history');
@@ -2642,7 +2646,7 @@ function openOrderSelection(){
   // Generuj przyciski dla każdego gracza
   grid.innerHTML = G.players.map((name, idx) => `
     <div class="order-player-btn" onclick="selectPlayerForOrder(${idx})">
-      <span>${name}</span>
+      <span>${escH(name)}</span>
     </div>
   `).join('');
   
@@ -2661,10 +2665,10 @@ function selectPlayerForOrder(playerIdx){
     if(playerOrder.includes(idx)){
       btn.classList.add('selected');
       const position = playerOrder.indexOf(idx) + 1;
-      btn.innerHTML = `<span class="order-position">${position}</span><span>${G.players[idx]}</span>`;
+      btn.innerHTML = `<span class="order-position">${position}</span><span>${escH(G.players[idx])}</span>`;
     } else {
       btn.classList.remove('selected');
-      btn.innerHTML = `<span>${G.players[idx]}</span>`;
+      btn.innerHTML = `<span>${escH(G.players[idx])}</span>`;
     }
   });
   
@@ -2732,7 +2736,7 @@ function startGame(){
   G.currentLeg=1;
   G.firstPlayerLeg=0;
   G.cp=G.firstPlayerLeg; G.round=1;
-  G.throws=[null,null,null]; G.throwMults=[null,null,null]; G.mult=1; G.history=[];
+  G.throws=[null,null,null]; G.throwMults=[null,null,null]; G.mult=1; G.history=[]; G._legUndo=null;
   G.cMarks={}; G.cScores=G.players.map(()=>0); G.cDarts=0; G.cMult=1; G.cricketHistory=[];
   G.atcT=G.players.map(()=>1); G.atcDarts=0; G.atcHistory=[];
   const nums=[15,16,17,18,19,20,25];
@@ -2760,7 +2764,7 @@ function startGame(){
   document.getElementById('game-opts').style.display='none';
   document.getElementById('game-legs-opt').style.display='none';
   setMult(1);
-  renderScoreboard();
+  renderScoreboard(); try{refreshThrows();}catch(e){}
   if(G.mode==='cricket') renderCricketBoard();
   if(G.mode==='atc') renderATC();
   if(G.countingMode==='summary'){
@@ -2833,8 +2837,9 @@ function renderScoreboard(){
   const throwSum=G.throws.filter(t=>t!==null).reduce((a,b)=>a+b,0);
   sb.innerHTML=G.players.map((name,i)=>{
     const active=i===G.cp;
-    const pR=G.history.filter(h=>h.p===i&&!h.bust);
-    const avg=pR.length?(pR.reduce((s,r)=>s+r.sc,0)/pR.length).toFixed(1):'0.0';
+    // średnia PDC z 3 lotek: punkty / wszystkie rzucone lotki (z bustami) × 3, z całego meczu
+    const _mt=matchTurns(i),_md=_mt.reduce((a,h)=>a+(h.dartsUsed||3),0),_mp=_mt.reduce((a,h)=>a+(h.bust?0:h.sc),0);
+    const avg=_md?(_mp/_md*3).toFixed(1):'0.0';
     let sc=isX01?G.scores[i]:G.mode==='cricket'?G.cScores[i]:(G.atcT[i]-1)+'/20';
     // If this is X01 and current player, show remaining points after throws
     if(isX01 && active && throwSum > 0){
@@ -2843,10 +2848,10 @@ function renderScoreboard(){
     const low=isX01&&G.scores[i]<=60;
     const needDI=G.dIn&&G.diDone.length&&!G.diDone[i];
     return`<div class="player-card${active?' active':''}">
-      <div class="player-avatar" style="background:${AVGS[i]}">${name[0]?.toUpperCase()||'G'}</div>
+      <div class="player-avatar" style="background:${AVGS[i]}">${escH(([...String(name).replace(/^🤖\s*/,'')][0]||'G').toUpperCase())}</div>
       <div style="flex:1">
-        <div class="player-name">${name}</div>
-        <div class="player-sub">${avg!=='0.0'?'ŚR:'+avg+' ':''} ${active?'<span style="color:#ff3c3c">▶ TWOJA TURA</span>':'oczekuje'}${needDI?' <span style="color:#ffd700">⚡D-IN</span>':''}${G.legs>1?' <span style="color:#ff8c00">LEGI:'+G.legWins[i]+'</span>':''}</div>
+        <div class="player-name">${escH(name)}</div>
+        <div class="player-sub">${G.legs>1&&isX01?'<span class="leg-badge">LEGI '+G.legWins[i]+'</span>':''}${avg!=='0.0'?'ŚR '+avg+' ':''}${active?'<span style="color:#ff3c3c">▶ TURA</span>':''}${needDI?' <span style="color:#ffd700">⚡D-IN</span>':''}</div>
       </div>
       <div class="player-score${low?' low':''}">${sc}</div>
     </div>`;
@@ -2857,7 +2862,7 @@ function renderScoreboard(){
   const turnLbl = document.getElementById('turn-lbl');
   if(turnLbl) turnLbl.textContent=(G.cp+1)+'/'+G.players.length;
   const legEl=document.getElementById('leg-info-lbl');
-  if(legEl) legEl.textContent=G.legs>1?('LEG '+G.currentLeg+'/'+G.legs):'';
+  if(legEl) legEl.textContent=(G.legs>1&&(G.mode==='501'||G.mode==='301'))?('LEG '+G.currentLeg+'/'+G.legs):'';
   
   // Aktualizuj wynik przeciwnika w grze online
   if(G._onlineRoomId || OL.currentRoomId) {
@@ -2932,9 +2937,11 @@ function getCheckoutForScore(score){
 }
 
 function updateCO(){
-  if(!G.active||(G.mode!=='501'&&G.mode!=='301')) return;
   const hint=document.getElementById('co-hint');
   if(!hint) return;
+  const _x01=G.active&&(G.mode==='501'||G.mode==='301');
+  hint.classList.toggle('co-x01',!!_x01);
+  if(!_x01) return;
 
   // W trybie online: pokaż hint tylko gdy to TWOJA tura
   if(G._onlineRoomId && OL.myIndex !== G.cp){
@@ -2946,7 +2953,10 @@ function updateCO(){
   // Oblicz pozostałe punkty uwzględniając już wpisane rzuty
   const throwSum=G.throws.filter(t=>t!==null).reduce((a,b)=>a+b,0);
   const sc=G.scores[G.cp]-throwSum;
-  const checkout=getCheckoutForScore(sc);
+  let checkout=getCheckoutForScore(sc);
+  // pokazuj tylko trasę, na którą wystarczy lotek w tej turze
+  const _left=3-G.throws.filter(t=>t!==null).length;
+  if(checkout&&String(checkout).trim().split(/\s+/).length>_left) checkout=null;
 
   if(checkout){
     hint.classList.add('on');
@@ -2974,6 +2984,8 @@ function setMult(n){
 
 function addDart(v){
   const idx=G.throws.indexOf(null); if(idx===-1)return;
+  // po zejściu albo przebiciu nie dopisujemy kolejnych lotek
+  if((G.mode==='501'||G.mode==='301'||/^\d+$/.test(String(G.mode)))&&G.diDone&&G.diDone[G.cp]&&G.scores){const r=G.scores[G.cp]-G.throws.filter(t=>t!==null).reduce((a,b)=>a+b,0);if(idx>0&&(r<=0||(G.dOut&&r===1))){toast(r===0?'🎯 Zejście! Naciśnij POTWIERDŹ':'Przebicie – naciśnij POTWIERDŹ');return;}}
   if((v===25||v===50)&&G.mult===3)return;
   if(v===50&&G.mult===2)return;
   const val=v*G.mult;
@@ -3081,7 +3093,10 @@ function processSum(sc){
     // ===== POPRAWKA: W trybie sumarycznym ignorujemy Double-In/Out constraints =====
     // bo system nie widzi indywidualnych rzutów, tylko sumę całej rundy
     if(G.countingMode === 'summary'){
+      // Niemożliwe wyniki 3 lotkami (163,166,169,172,173,175,176,178,179) i niemożliwe zejścia
+      if(!(sc>=0&&sc<=180)||[163,166,169,172,173,175,176,178,179].indexOf(sc)>-1){toast('❌ Niemożliwy wynik: '+sc);return;}
       const rem=G.scores[pi]-sc;
+      if(rem===0&&G.dOut&&(G.scores[pi]>170||[159,162,163,165,166,168,169].indexOf(G.scores[pi])>-1)){toast('❌ Z '+G.scores[pi]+' nie da się zejść na double');return;}
       
       if(!G.diDone[pi]){
         // Otwieramy Double-In (w trybie summary akceptujemy każdy wynik)
@@ -3104,7 +3119,7 @@ function processSum(sc){
       }
       
       // Double-In już otwarty - normalnie liczymy
-      if(G.scores[pi]<=170)G._gameCoAttempts[pi]=(G._gameCoAttempts[pi]||0)+1;
+      if(G.scores[pi]<=170&&(!G.dOut||[159,162,163,165,166,168,169].indexOf(G.scores[pi])<0)&&!(G.dOut&&G.scores[pi]<2))G._gameCoAttempts[pi]=(G._gameCoAttempts[pi]||0)+1;
       if(rem<0||(G.dOut&&rem===1)){toast('PRZEBICIE!');advancePlayer([...G.scores],[...G.diDone],0,true);return;}
       if(rem===0){
         // Koniec gry - w trybie summary akceptujemy każdy wynik (bez walidacji double-out)
@@ -3167,37 +3182,44 @@ function confirmThrow(){
     const ns=[...G.scores];ns[pi]=rem;toast('🎯 Double-In otwarty! -'+sum);advancePlayer(ns,nd,sum,false,true);return;
   }
 
-  // NORMAL
-  const sum=filled.reduce((a,b)=>a+b,0);
-  const rem=G.scores[pi]-sum;
-  // Track checkout attempt (score ≤170 = reachable finish)
-  if(G.scores[pi]<=170){G._gameCoAttempts[pi]=(G._gameCoAttempts[pi]||0)+1;}
-  // Track double attempts: last dart aimed at a double segment
-  {
-    const lastIdx=G.throws.map((v,i)=>v!==null?i:-1).filter(i=>i!==-1).pop();
-    if(lastIdx !== undefined){
-      const lastMult=G.throwMults[lastIdx]; const lastVal=G.throws[lastIdx];
-      const isDoubleAttempt = (lastMult===2) || (lastVal===50); // double or bull
-      if(isDoubleAttempt){
-        if(!G._gameDoubleAttempts) G._gameDoubleAttempts=[];
-        G._gameDoubleAttempts[pi]=(G._gameDoubleAttempts[pi]||0)+1;
-      }
+  // NORMAL – liczymy lotka po lotce; po zejściu kolejne wpisane lotki (np. MISS) są ignorowane
+  const BOGEY=[159,162,163,165,166,168,169];
+  const start=G.scores[pi];
+  if(start<=170&&!(G.dOut&&(BOGEY.indexOf(start)>-1||start<2))){G._gameCoAttempts[pi]=(G._gameCoAttempts[pi]||0)+1;}
+  if(!G._gameDoubleAttempts) G._gameDoubleAttempts=[];
+  if(!G._gameDoubleHits) G._gameDoubleHits=[];
+  let r=start,sum=0,out=0; // out: 0 = gra dalej, 1 = bust, 2 = zejście, 3 = zejście bez double
+  for(let i=0;i<3;i++){
+    const v=G.throws[i]; if(v===null) continue;
+    const dbl=G.throwMults[i]===2||v===50;
+    // lotka „na double”: gdy przed rzutem zostało 2–40 parzyste albo 50 (bull)
+    if(G.dOut&&(r===50||(r>=2&&r<=40&&r%2===0))) G._gameDoubleAttempts[pi]=(G._gameDoubleAttempts[pi]||0)+1;
+    r-=v; sum+=v;
+    if(r<0||(G.dOut&&r===1)){out=1;break;}
+    if(r===0){
+      out=(G.dOut&&!dbl)?3:2;
+      for(let k=i+1;k<3;k++){G.throws[k]=null;G.throwMults[k]=null;}
+      break;
     }
   }
-  if(rem<0||(G.dOut&&rem===1)){toast('PRZEBICIE! Runda nie liczy się');advancePlayer([...G.scores],[...G.diDone],0,true);return;}
-  if(rem===0){
-    const lastIdx=G.throws.map((v,i)=>v!==null?i:-1).filter(i=>i!==-1).pop();
-    const lastMult=G.throwMults[lastIdx]; const lastVal=G.throws[lastIdx];
-    if(G.dOut&&!(lastMult===2||lastVal===50)){toast('Musisz zakończyć na double!');advancePlayer([...G.scores],[...G.diDone],0,true);return;}
+  if(out===1){toast('PRZEBICIE! Runda nie liczy się');advancePlayer([...G.scores],[...G.diDone],0,true);return;}
+  if(out===3){toast('Musisz zakończyć na double!');advancePlayer([...G.scores],[...G.diDone],0,true);return;}
+  if(out===2){
     G._gameCoSuccess[pi]=(G._gameCoSuccess[pi]||0)+1;
-    if(!G._gameDoubleHits) G._gameDoubleHits=[];
-    if(lastMult===2||lastVal===50) G._gameDoubleHits[pi]=(G._gameDoubleHits[pi]||0)+1;
+    if(G.dOut) G._gameDoubleHits[pi]=(G._gameDoubleHits[pi]||0)+1;
     const ns=[...G.scores];ns[pi]=0;G.scores=ns;pushH(pi,sum,false);trigWin(pi,sum);return;
   }
-  const ns=[...G.scores];ns[pi]=rem;advancePlayer(ns,[...G.diDone],sum,false);
+  const ns=[...G.scores];ns[pi]=r;advancePlayer(ns,[...G.diDone],sum,false);
 }
 
 function undoTurn(){
+  // Cofnięcie zejścia, które zakończyło lega: przywróć poprzedni leg
+  if(!G.history.length&&G._legUndo&&!G._onlineRoomId){
+    const u=G._legUndo;G._legUndo=null;
+    G.history=u.history;G.scores=u.scores;G.legWins=u.legWins;G.currentLeg=u.currentLeg;G.firstPlayerLeg=u.firstPlayerLeg;G.diDone=u.diDone;
+    if(G._gameCoSuccess)G._gameCoSuccess[u.winner]=Math.max(0,(G._gameCoSuccess[u.winner]||0)-1);
+    if(G._gameDoubleHits&&G.dOut)G._gameDoubleHits[u.winner]=Math.max(0,(G._gameDoubleHits[u.winner]||0)-1);
+  }
   const last=G.history.pop(); if(!last){toast('Brak historii');return;}
   if(G._allHistory){const _i=G._allHistory.lastIndexOf(last);if(_i>=0)G._allHistory.splice(_i,1);}
   G.cp=last.p; G.round=last.round;
@@ -3223,13 +3245,15 @@ function trigWin(pi,lastSc){
   if(!G._gameHighestCheckout) G._gameHighestCheckout=[];
   if(lastSc > (G._gameHighestCheckout[pi]||0)) G._gameHighestCheckout[pi] = lastSc;
 
-  const pR=G.history.filter(h=>h.p===pi&&!h.bust);
-  const avg=pR.length?(pR.reduce((s,r)=>s+r.sc,0)/pR.length).toFixed(1):'0.0';
+  // średnia PDC z całego meczu i liczba podejść zwycięzcy
+  const _mt=matchTurns(pi),_md=_mt.reduce((a,h)=>a+(h.dartsUsed||3),0),_mp=_mt.reduce((a,h)=>a+(h.bust?0:h.sc),0);
+  const avg=_md?(_mp/_md*3).toFixed(1):'0.0';
+  const visits=_mt.length||G.round;
 
   if(G.legs<=1){
     // Single leg or non-x01 mode — show final win
     SFX.win();
-    showWin(G.players[pi],G.round,avg,G.mode.toUpperCase());
+    showWin(G.players[pi],visits,avg,G.mode.toUpperCase());
     if(!OL.currentRoomId) recGame(G.players[pi]); return;
   }
 
@@ -3239,10 +3263,13 @@ function trigWin(pi,lastSc){
   if(G.legWins[pi]>=needed){
     // Won the match!
     SFX.win();
-    showWin(G.players[pi],G.currentLeg,avg,G.mode.toUpperCase()+' ('+G.legWins[pi]+'/'+G.legs+')');
+    showWin(G.players[pi],visits,avg,G.mode.toUpperCase()+' ('+G.legWins[pi]+'/'+G.legs+')');
     if(!OL.currentRoomId) recGame(G.players[pi]); return;
   }
 
+  // Zapamiętaj stan sprzed nowego lega – żeby dało się cofnąć źle wpisane zejście
+  if(!G._onlineRoomId) G._legUndo={history:G.history.slice(),scores:G.scores.slice(),legWins:G.legWins.slice(),winner:pi,currentLeg:G.currentLeg,firstPlayerLeg:G.firstPlayerLeg,diDone:G.diDone.slice(),cp:G.cp,round:G.round};
+  if(G._legUndo) G._legUndo.legWins[pi]--;
   // Start next leg
   toast('🏆 '+G.players[pi]+' wygrywa lega '+G.currentLeg+'! ('+G.legWins.map((w,i)=>G.players[i].split(' ')[0]+':'+w).join(' - ')+')');
   SFX.leg();
@@ -3273,9 +3300,9 @@ function renderCricketBoard(){
   // Header row
   html+=`<div style="font-family:monospace;font-size:10px;color:#8888aa;text-align:center">№</div>`;
   G.players.forEach((_,pi)=>{
-    html+=`<div style="text-align:center;font-family:monospace;font-size:10px;color:#8888aa">${G.players[pi].slice(0,6)}</div>`;
+    html+=`<div style="text-align:center;font-family:monospace;font-size:10px;color:${pi===G.cp?'#ff8c00':'#8888aa'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0">${escH(G.players[pi])}</div>`;
   });
-  html+=`<div style="font-family:monospace;font-size:10px;color:#8888aa;text-align:center">PTS</div>`;
+  html+=`<div style="font-family:monospace;font-size:10px;color:#8888aa;text-align:center">№</div>`;
 
   // Data rows
   CNUMS.forEach(num=>{
@@ -3327,6 +3354,7 @@ function setCM(n){
 
 function cricketHit(num){
   if(G.cDarts>=3){toast('Koniec tury — 3 rzuty!');return;}
+  if(num===25&&G.cMult===3){toast('Nie ma potrójnego bulla');return;}
   
   // SAVE STATE FOR UNDO
   const savedState={
@@ -3370,7 +3398,7 @@ function cricketHit(num){
     const mx=Math.max(...G.cScores);
     if(G.cScores[G.cp]===mx){SFX.win();showWin(G.players[G.cp],G.round,'—','CRICKET');if(!OL.currentRoomId)recGame(G.players[G.cp]);return;}
   }
-  if(G.cDarts>=3) toast('Kliknij KONIEC TURY');
+  if(G.cDarts>=3) toast('3 lotki – naciśnij POTWIERDŹ');
 }
 
 function undoCricketMove(){
@@ -4048,7 +4076,7 @@ function renderEx(cat){
     <div class="exercise-card">
       <div class="ex-header">
         <span style="font-size:26px">${e.icon}</span>
-        <div style="flex:1"><div style="font-family:'Bebas Neue',cursive;font-size:20px;letter-spacing:2px">${e.name}</div></div>
+        <div style="flex:1"><div style="font-family:'Bebas Neue',cursive;font-size:20px;letter-spacing:2px">${escH(e.name)}</div></div>
         <div class="diff ${e.diff}">${e.diff.toUpperCase()}</div>
       </div>
       <div style="padding:12px 14px">
@@ -4629,7 +4657,7 @@ function secValidatePlayerName(name) {
   var s = String(name || '').trim();
   if (s.length < 1) return 'Nazwa jest za krótka.';
   if (s.length > 20) return 'Nazwa max 20 znaków.';
-  if (/<|>|script|javascript/i.test(s)) return 'Niedozwolone znaki w nazwie.';
+  if (/[<>"`]/.test(s)) return 'Niedozwolone znaki w nazwie.';
   return null; // null = OK
 }
 
@@ -4692,6 +4720,8 @@ addDart = function(v) {
 var _origStartGame = startGame;
 startGame = function() {
   for (var i = 0; i < G.players.length; i++) {
+    // w grze online nicki przychodzą z serwera – oczyszczamy zamiast blokować start
+    if (G._onlineRoomId || window.__olStarting) { G.players[i] = safeNick(G.players[i]) || ('Gracz ' + (i+1)); continue; }
     var err = secValidatePlayerName(G.players[i]);
     if (err) {
       toast('⚠ Gracz ' + (i+1) + ': ' + err);
@@ -4922,10 +4952,12 @@ async function wrcShareMyCamera() {
     }
     wrcState.localStream = stream;
     wrcState.sharing = true;
+    // najpierw połączenie bezpośrednie (płynny obraz, zero kosztów Firebase)
+    try { if(window.RTCV) RTCV.setTrack(stream.getVideoTracks()[0]); } catch(e) {}
 
     // Canvas do przechwytywania klatek
     const canvas = document.createElement('canvas');
-    canvas.width = 640; canvas.height = 480;
+    canvas.width = 480; canvas.height = 360;
     const ctx = canvas.getContext('2d');
     const videoEl = document.createElement('video');
     videoEl.srcObject = stream;
@@ -4948,13 +4980,17 @@ async function wrcShareMyCamera() {
     await setDoc(frameRef, { active: myUid, ts: Date.now() }).catch(()=>{});
 
     // Wysyłaj klatki — throttled: czekaj na zakończenie poprzedniego zapisu
-    let sending = false;
+    // Zapasowo przez Firebase: 1 klatka/s; gdy działa połączenie bezpośrednie – tylko co 5 s (dla starszych wersji aplikacji)
+    let sending = false, lastSent = 0;
     wrcState.captureInterval = setInterval(async () => {
       if(!wrcState.sharing || sending) return;
+      const gap = (window.RTCV && RTCV.live()) ? 5000 : 1000;
+      if(Date.now() - lastSent < gap) return;
+      lastSent = Date.now();
       sending = true;
       try {
-        ctx.drawImage(videoEl, 0, 0, 640, 480);
-        const b64 = canvas.toDataURL('image/jpeg', 0.75).split(',')[1];
+        ctx.drawImage(videoEl, 0, 0, 480, 360);
+        const b64 = canvas.toDataURL('image/jpeg', 0.55).split(',')[1];
         wrcState.frameSeq++;
         await setDoc(frameRef, {
           [myUid + '_frame']: b64,
@@ -4977,6 +5013,7 @@ async function wrcShareMyCamera() {
 
 function wrcStopSharing() {
   wrcState.sharing = false;
+  try { if(window.RTCV) RTCV.setTrack(null); } catch(e) {}
   if(wrcState.captureInterval) { clearInterval(wrcState.captureInterval); wrcState.captureInterval = null; }
   if(wrcState.localStream) { wrcState.localStream.getTracks().forEach(t => t.stop()); wrcState.localStream = null; }
   // Usuń klatki z Firestore (deleteField naprawdę kasuje pole)
@@ -5019,8 +5056,21 @@ function wrcStartReceiving() {
 
   let lastSeq = -1;
 
+  // obraz z połączenia bezpośredniego ma pierwszeństwo przed klatkami z Firebase
+  const showRtc = () => {
+    const v = document.getElementById('wrc-video'), dot = document.getElementById('wrc-dot'), noCam = document.getElementById('wrc-no-cam');
+    if(!(window.RTCV && RTCV.remoteOn()) || !v) return false;
+    if(v.srcObject !== RTCV.stream()) { v.srcObject = RTCV.stream(); v.muted = true; v.playsInline = true; v.setAttribute('playsinline',''); }
+    v.style.cssText = 'display:block;width:100%;height:100%;object-fit:cover;border-radius:10px;'; v.play && v.play().catch(()=>{});
+    imgEl.style.display = 'none'; if(noCam) noCam.style.display = 'none'; if(dot) dot.classList.remove('off');
+    return true;
+  };
+  if(!wrcState._rtcVidHook){ wrcState._rtcVidHook = true; window.addEventListener('dm-rtc-video', () => { if(!showRtc()){ const v=document.getElementById('wrc-video'); if(v){ v.style.display='none'; } lastSeq = -1; } }); }
+  showRtc();
+
   wrcState.snapshotUnsub = onSnapshot(frameRef, (snap) => {
     if(!snap.exists()) return;
+    if(showRtc()) return;
     const data = snap.data();
 
     // Znajdź klatkę od rywala (nie naszą)
@@ -5067,6 +5117,7 @@ function wrcStopAll() {
   if(wrcState.audioUnsub) { wrcState.audioUnsub(); wrcState.audioUnsub = null; }
   const imgEl = document.getElementById('wrc-stream-img');
   if(imgEl) imgEl.style.display = 'none';
+  { const v = document.getElementById('wrc-video'); if(v) v.style.display = 'none'; }
   const dot = document.getElementById('wrc-dot');
   const noCam = document.getElementById('wrc-no-cam');
   const micDot = document.getElementById('wrc-mic-dot');
@@ -5325,7 +5376,7 @@ function onFbAuthChange(user) {
       if (fb2) {
         const uRef = fb2.doc(fb2.db,'users',user.uid);
         fb2.getDoc(uRef).then(s => {
-          if (s.exists() && !s.data().nick) fb2.updateDoc(uRef, { nick });
+          if (s.exists() && !s.data().nick) fb2.updateDoc(uRef, { nick: safeNick(nick) || 'Gracz' });
         }).catch(()=>{});
       }
     } catch(e) {}
@@ -5390,13 +5441,13 @@ function olShowLogin() {
 
 async function olRegister() {
   const fb = getFb();
-  if (!fb) { olMsg('ol-reg-msg', '❌ Firebase nie gotowy – odśwież stronę', 'error'); return; }
+  if (!fb) { olMsg('ol-reg-msg', navigator.onLine===false?'❌ Brak internetu – połącz się i spróbuj ponownie':'❌ Nie udało się połączyć z serwerem – odśwież stronę', 'error'); return; }
   const nick = document.getElementById('ol-reg-nick').value.trim();
   const email = document.getElementById('ol-reg-email').value.trim();
   const pass = document.getElementById('ol-reg-pass').value;
   const conf = document.getElementById('ol-reg-confirm').value;
   if (!nick || !email || !pass || !conf) { olMsg('ol-reg-msg','❌ Wypełnij wszystkie pola','error'); return; }
-  if (nick.length < 3) { olMsg('ol-reg-msg','❌ Nick min. 3 znaki','error'); return; }
+  if (!/^[\p{L}\p{N} _.\-]{3,20}$/u.test(nick)) { olMsg('ol-reg-msg','❌ Nick: 3–20 znaków (litery, cyfry, spacja, _ . -)','error'); return; }
   if (pass.length < 6) { olMsg('ol-reg-msg','❌ Hasło min. 6 znaków','error'); return; }
   if (pass !== conf) { olMsg('ol-reg-msg','❌ Hasła się nie zgadzają','error'); return; }
   olMsg('ol-reg-msg','⏳ Tworzę konto...','');
@@ -5405,8 +5456,10 @@ async function olRegister() {
     await fb.updateProfile(cred.user, { displayName: nick });
     // Zapisz profil w Firestore
     await fb.setDoc(fb.doc(fb.db, 'users', cred.user.uid), {
-      nick, email, wins:0, losses:0, games:0, createdAt: fb.serverTimestamp()
+      nick, wins:0, losses:0, games:0, createdAt: fb.serverTimestamp()
     });
+    // e-mail tylko w prywatnej części profilu (widzi go wyłącznie właściciel)
+    try { await fb.setDoc(fb.doc(fb.db, 'users', cred.user.uid, 'private', 'data'), { email }, { merge:true }); } catch(e) {}
     olMsg('ol-reg-msg','✅ Konto stworzone!','success');
   } catch(e) {
     const msgs = {
@@ -5420,7 +5473,7 @@ async function olRegister() {
 
 async function olLogin() {
   const fb = getFb();
-  if (!fb) { olMsg('ol-login-msg','❌ Firebase nie gotowy','error'); return; }
+  if (!fb) { olMsg('ol-login-msg',navigator.onLine===false?'❌ Brak internetu – połącz się i spróbuj ponownie':'❌ Nie udało się połączyć z serwerem – odśwież stronę','error'); return; }
   const email = document.getElementById('ol-login-email').value.trim();
   const pass = document.getElementById('ol-login-pass').value;
   if (!email || !pass) { olMsg('ol-login-msg','❌ Wypełnij email i hasło','error'); return; }
@@ -5550,7 +5603,7 @@ async function olCreateRoom() {
   const fb = getFb(); const user = getFbUser();
   if (!fb || !user) { olMsg('ol-create-msg','❌ Nie zalogowany','error'); return; }
   const nick = user.displayName || user.email.split('@')[0];
-  const roomName = document.getElementById('ol-room-name').value.trim() || (nick + "'s Room");
+  const roomName = (document.getElementById('ol-room-name').value.replace(/[<>"`\\]/g,'').trim() || (safeNick(nick) + "'s Room")).slice(0,30);
   olMsg('ol-create-msg','⏳ Tworzę pokój...','');
   try {
     const roomRef = await fb.addDoc(fb.collection(fb.db, 'rooms'), {
@@ -5564,7 +5617,8 @@ async function olCreateRoom() {
       turnTimerSecs: _olTimer ? _olTimerSecs : 0,
       status: 'waiting',    // waiting | playing | finished
       hostUid: user.uid,
-      players: [{ uid: user.uid, nick, ready: false }],
+      players: [{ uid: user.uid, nick: safeNick(nick) || 'Gracz', ready: false }],
+      uids: [user.uid],
       gameState: null,
       createdAt: fb.serverTimestamp()
     });
@@ -5585,22 +5639,23 @@ async function olRefreshRooms() {
   const list = document.getElementById('ol-rooms-list');
   list.innerHTML = '<div style="text-align:center;color:#8888aa;padding:20px;font-family:monospace;font-size:12px">🔄 Ładowanie...</div>';
   try {
-    // Cleanup: usuń pokoje finished/closed + pokoje gdzie host nieobecny >30 min
-    const cleanQ = fb.query(fb.collection(fb.db,'rooms'), fb.where('status','in',['finished','closed']));
-    const cleanSnap = await fb.getDocs(cleanQ);
-    cleanSnap.forEach(async d => { try { await fb.deleteDoc(d.ref); } catch(e){} });
-
-    // Pokoje waiting/playing bez aktywnego hosta przez >30 min
+    // Sprzątanie: usuwamy WYŁĄCZNIE własne pokoje (jako host): zakończone albo porzucone >30 min.
+    // Cudzych pokoi nie ruszamy – inaczej przepadałby im rewanż.
     const thirtyMinAgo = new Date(Date.now() - 30 * 60 * 1000);
-    const staleQ = fb.query(fb.collection(fb.db,'rooms'), fb.where('status','in',['waiting','playing']));
-    const staleSnap = await fb.getDocs(staleQ);
-    staleSnap.forEach(async d => {
-      const data = d.data();
-      const lastSeen = data.hostLastSeen?.toDate?.() || data.createdAt?.toDate?.() || null;
-      if (lastSeen && lastSeen < thirtyMinAgo) {
-        try { await fb.deleteDoc(d.ref); } catch(e) {}
-      }
-    });
+    const _me = getFbUser();
+    if (_me) {
+      try {
+        const mine = await fb.getDocs(fb.query(fb.collection(fb.db,'rooms'), fb.where('hostUid','==',_me.uid)));
+        mine.forEach(async d => {
+          if (d.id === OL.currentRoomId) return;
+          const data = d.data();
+          const lastSeen = data.hostLastSeen?.toDate?.() || data.createdAt?.toDate?.() || null;
+          const done = data.status === 'finished' || data.status === 'closed';
+          const stale = lastSeen && lastSeen < thirtyMinAgo;
+          if ((done && (!lastSeen || Date.now() - lastSeen.getTime() > 2*60*1000)) || stale) { try { await fb.deleteDoc(d.ref); } catch(e) {} }
+        });
+      } catch(e) {}
+    }
     const q = fb.query(fb.collection(fb.db,'rooms'), fb.where('status','in',['waiting','playing']), fb.orderBy('createdAt','desc'), fb.limit(20));
     const snap = await fb.getDocs(q);
     if (snap.empty) {
@@ -5610,6 +5665,7 @@ async function olRefreshRooms() {
     list.innerHTML = '';
     snap.forEach(d => {
       const r = d.data();
+      { const ls = r.hostLastSeen?.toDate?.() || r.createdAt?.toDate?.() || null; if (ls && ls < thirtyMinAgo) return; }
       const cnt = (r.players||[]).length;
       const isFull = cnt >= r.maxPlayers;
       const isPlaying = r.status === 'playing';
@@ -5627,7 +5683,7 @@ async function olRefreshRooms() {
       list.innerHTML += `
         <div class="room-card" onclick="${onclick}" style="${cardStyle}">
           <div style="flex:1">
-            <div style="font-weight:700;font-size:14px;margin-bottom:4px">${r.name||'Pokój'}${isMyRoom?' 👑':''}</div>
+            <div style="font-weight:700;font-size:14px;margin-bottom:4px">${escH(r.name||'Pokój')}${isMyRoom?' 👑':''}</div>
             <div style="font-size:11px;color:#8888aa;font-family:monospace">${modeIcon} ${r.mode.toUpperCase()} &nbsp;•&nbsp; 👥 ${cnt}/${r.maxPlayers}</div>
           </div>
           ${rejoinBadge}<span class="room-badge ${badge}">${badgeTxt}</span>
@@ -5645,18 +5701,20 @@ async function olJoinRoom(roomId) {
   const nick = user.displayName || user.email.split('@')[0];
   try {
     const roomRef = fb.doc(fb.db,'rooms',roomId);
-    const snap = await fb.getDoc(roomRef);
-    if (!snap.exists()) { toast('❌ Pokój nie istnieje'); return; }
-    const r = snap.data();
-    if (r.status !== 'waiting') { toast('❌ Gra już trwa'); return; }
-    const players = r.players || [];
-    if (players.length >= r.maxPlayers) { toast('❌ Pokój pełny'); return; }
-    // Sprawdź czy już jest w pokoju
-    const already = players.find(p => p.uid === user.uid);
-    if (!already) {
-      players.push({ uid: user.uid, nick, ready: false });
-      await fb.updateDoc(roomRef, { players });
-    }
+    // transakcja: dwie osoby dołączające w tej samej chwili nie nadpiszą się nawzajem
+    let r = null, err = '';
+    await fb.runTransaction(fb.db, async tx => {
+      const snap = await tx.get(roomRef);
+      if (!snap.exists()) { err = '❌ Pokój nie istnieje'; return; }
+      r = snap.data();
+      const players = r.players || [];
+      if (players.find(p => p.uid === user.uid)) return;
+      if (r.status !== 'waiting') { err = '❌ Gra już trwa'; return; }
+      if (players.length >= r.maxPlayers) { err = '❌ Pokój pełny'; return; }
+      const np = players.concat([{ uid: user.uid, nick: safeNick(nick) || 'Gracz', ready: false }]);
+      tx.update(roomRef, { players: np, uids: np.map(p => p.uid) });
+    });
+    if (err) { toast(err); return; }
     OL.isHost = r.hostUid === user.uid;
     OL.currentRoomId = roomId;
     olOpenRoomModal(roomId);
@@ -5712,12 +5770,12 @@ function olOpenRoomModal(roomId) {
     const isHostView = r.hostUid === user.uid;
     document.getElementById('ol-room-players-list').innerHTML = players.map((p,i) => {
       const kickBtn = (isHostView && p.uid !== user.uid)
-        ? `<button onclick="olKickPlayer('${p.uid.replace(/'/g,"\\'")}','${p.nick.replace(/'/g,"\\'")}',event)" style="background:rgba(255,60,60,.12);border:1px solid rgba(255,60,60,.4);color:#ff3c3c;padding:5px 10px;border-radius:7px;cursor:pointer;font-family:'Bebas Neue',cursive;font-size:12px;letter-spacing:1px;flex-shrink:0;transition:background .2s">✕ KICK</button>`
+        ? `<button onclick="olKickPlayer('${escH(p.uid)}',this.dataset.n,event)" data-n="${escH(p.nick)}" style="background:rgba(255,60,60,.12);border:1px solid rgba(255,60,60,.4);color:#ff3c3c;padding:5px 10px;border-radius:7px;cursor:pointer;font-family:'Bebas Neue',cursive;font-size:12px;letter-spacing:1px;flex-shrink:0;transition:background .2s">✕ KICK</button>`
         : '';
       return `<div style="display:flex;align-items:center;gap:10px;padding:10px;background:#1a1a26;border-radius:8px;margin-bottom:6px;border:1px solid ${p.uid===r.hostUid?'rgba(255,215,0,.3)':'#2a2a40'}">
-        <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#ff3c3c,#880000);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',cursive;font-size:16px;flex-shrink:0">${p.nick[0].toUpperCase()}</div>
+        <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#ff3c3c,#880000);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',cursive;font-size:16px;flex-shrink:0">${escH((p.nick||'?')[0].toUpperCase())}</div>
         <div style="flex:1">
-          <div style="font-weight:700;font-size:13px">${p.nick}${p.uid===r.hostUid?' 👑':''}</div>
+          <div style="font-weight:700;font-size:13px">${escH(p.nick)}${p.uid===r.hostUid?' 👑':''}</div>
           <div style="font-size:10px;color:#8888aa;font-family:monospace">${p.uid===user.uid?'• TY':''}</div>
         </div>
         ${kickBtn}
@@ -5780,7 +5838,7 @@ async function olKickPlayer(targetUid, targetNick, evt) {
     const bannedList = [...(r.leftPlayers || [])];
     if (!bannedList.includes(targetUid)) bannedList.push(targetUid);
     const players = (r.players||[]).filter(p => p.uid !== targetUid);
-    await fb.updateDoc(roomRef, { players, leftPlayers: bannedList });
+    await fb.updateDoc(roomRef, { players, uids: players.map(p => p.uid), leftPlayers: bannedList });
     toast('✅ ' + targetNick + ' wyrzucony z pokoju');
   } catch(e) { toast('❌ ' + e.message); }
 }
@@ -5821,6 +5879,7 @@ async function olLeaveRoom() {
           const players = (r.players||[]).filter(p => p.uid !== user.uid);
           await fb.updateDoc(roomRef, { 
             players,
+            uids: players.map(p => p.uid),
             leftPlayers: bannedList // Czarna lista graczy którzy opuścili pokój
           });
           toast('Opuściłeś pokój (nie możesz ponownie dołączyć)');
@@ -5879,8 +5938,8 @@ async function olRejoinRoom(roomId) {
         toast('❌ Pokój pełny');
         return;
       }
-      players.push({ uid: user.uid, nick, ready: false });
-      await fb.updateDoc(roomRef, { players });
+      players.push({ uid: user.uid, nick: safeNick(nick) || 'Gracz', ready: false });
+      await fb.updateDoc(roomRef, { players, uids: players.map(p => p.uid) });
     }
     OL.isHost = r.hostUid === user.uid;
     OL.currentRoomId = roomId;
@@ -6198,6 +6257,10 @@ function olOpenDiceRollModal(roomId, players) {
     const hasRoll0 = rolls[0] && typeof rolls[0] === 'object' && rolls[0].value;
     const hasRoll1 = rolls[1] && typeof rolls[1] === 'object' && rolls[1].value;
     if (hasRoll0 && hasRoll1) {
+      // finalizuj tylko raz na daną parę rzutów (snapshoty przychodzą też przy innych zapisach)
+      const _k = rolls[0].value + ':' + rolls[1].value + ':' + (rolls[0].ts||'') + ':' + (rolls[1].ts||'');
+      if (OL_diceState._finKey === _k) return;
+      OL_diceState._finKey = _k;
       setTimeout(() => olFinalizeDiceRoll(rolls), 800);
     }
   });
@@ -6289,6 +6352,7 @@ async function olRollDice(playerIndex) {
 }
 
 async function olFinalizeDiceRoll(rolls) {
+  OL_diceState._finKey = null;
   if (OL_diceState.diceUnsub) {
     OL_diceState.diceUnsub();
     OL_diceState.diceUnsub = null;
@@ -6342,8 +6406,8 @@ async function olFinalizeDiceRoll(rolls) {
   // Zamknij modalę
   document.getElementById('dice-roll-modal').classList.remove('active');
   
-  // Uruchom grę z wybranym graczem na starcie
-  await olStartOnlineGameWithWinner(winnerIndex);
+  // Uruchom grę z wybranym graczem na starcie – zapisuje tylko host (drugi gracz wchodzi przez nasłuch pokoju)
+  if (OL.isHost) await olStartOnlineGameWithWinner(winnerIndex);
 }
 
 // ---- START GRY ONLINE ----
@@ -6373,7 +6437,7 @@ async function olStartOnlineGame() {
       cMarks: {},
       cScores: players.map(() => 0),
       cDarts: 0,
-      atcT: players.map(() => 0),
+      atcT: players.map(() => 1),
       atcDarts: 0,
       history: [],
       lastMove: null,
@@ -6417,7 +6481,7 @@ async function olStartOnlineGameWithWinner(firstPlayerIndex) {
       cMarks: {},
       cScores: players.map(() => 0),
       cDarts: 0,
-      atcT: players.map(() => 0),
+      atcT: players.map(() => 1),
       atcDarts: 0,
       history: [],
       lastMove: null,
@@ -6436,6 +6500,7 @@ async function olStartOnlineGameWithWinner(firstPlayerIndex) {
 
 // ---- WEJŚCIE DO GRY ONLINE ----
 function olEnterOnlineGame(roomData, players) {
+  OL._timerKey = null;
   const user = getFbUser();
   if (!user) return;
 
@@ -6856,7 +6921,7 @@ function olUpdateTurnUI(cp) {
           : 'background:rgba(136,136,170,.08);border-color:#2a2a40;color:#8888aa'
       ].join(';');
       const arrow = offset > 0 ? '<span style="font-size:8px;opacity:.5">' + offset + '</span> ' : '🎯 ';
-      chip.innerHTML = arrow + (G.players[idx] || ('Gracz '+(idx+1))).toUpperCase() + (isMe ? ' (TY)' : '');
+      chip.innerHTML = arrow + escH((G.players[idx] || ('Gracz '+(idx+1))).toUpperCase()) + (isMe ? ' (TY)' : '');
       queue.appendChild(chip);
       // Strzalka miedzy graczami (nie po ostatnim)
       if (offset < n - 1) {
@@ -6893,8 +6958,11 @@ function olUpdateTurnUI(cp) {
   // Start turn timer
   const timerSecs = G._onlineTimerSecs || 0;
   if (timerSecs > 0 && !OL.winRecorded) {
-    olTimerStart(timerSecs, isMyTurn);
+    // restart licznika tylko przy zmianie tury – inne zapisy (heartbeat, statystyki) go nie resetują
+    const _tk = G.cp + ':' + G.round + ':' + (G.currentLeg||1);
+    if (OL._timerKey !== _tk) { OL._timerKey = _tk; olTimerStart(timerSecs, isMyTurn); }
   } else {
+    OL._timerKey = null;
     olTimerStop();
   }
 }
@@ -7020,13 +7088,13 @@ async function olSyncGameState() {
     const lastThrow = lastValidTurn ? lastValidTurn.sc : 0;
     
     // Konwertuj historię (każdy rzut)
-    const historyData = {
-      moves: G.history.map(h => ({
-        p: h.p,
-        sc: h.sc,
-        bust: h.bust || false
-      }))
-    };
+    // Historia: bierzemy wspólną listę z Firebase i dopisujemy TYLKO swój ostatni ruch
+    // (wcześniej każdy zapis nadpisywał ruchy przeciwnika)
+    const _base = ((G._fbHistory && G._fbHistory.moves) || []).slice();
+    const _h = G.history[G.history.length - 1];
+    if (_h && _h.p === myIdx && !_h._synced) { _base.push({ p: _h.p, sc: _h.sc, bust: _h.bust || false }); _h._synced = 1; }
+    const historyData = { moves: _base };
+    G._fbHistory = historyData;
     
     const runningStats = {
       totalDarts:     myTurns.reduce((s, h) => s + (h.dartsUsed || 3), 0),
@@ -7153,7 +7221,7 @@ async function olRecordWin(winnerIdx) {
       : f9Avg.toFixed(2);
 
     const update = {
-      nick:           user.displayName || user.email.split('@')[0] || 'Gracz',
+      nick:           safeNick(user.displayName || user.email.split('@')[0]) || 'Gracz',
       wins:           (d.wins||0)           + (isWinner ? 1 : 0),
       losses:         (d.losses||0)         + (isWinner ? 0 : 1),
       games:          prevGames             + 1,
@@ -7213,9 +7281,9 @@ async function olRefreshLb() {
       html += `
         <div class="lb-row" onclick="olShowPlayerStats('${safeUid}')" style="cursor:pointer;transition:background 0.15s" onmouseover="this.style.background='#1a1a2e'" onmouseout="this.style.background=''">
           <div class="lb-rank ${rankCls}">${i}</div>
-          <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#ff3c3c,#880000);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',cursive;font-size:16px;flex-shrink:0">${(u.nick||'?')[0].toUpperCase()}</div>
+          <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#ff3c3c,#880000);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',cursive;font-size:16px;flex-shrink:0">${escH((u.nick||'?')[0].toUpperCase())}</div>
           <div style="flex:1">
-            <div style="font-weight:700;font-size:13px">${u.nick||'Gracz'}</div>
+            <div style="font-weight:700;font-size:13px">${escH(u.nick||'Gracz')}</div>
             <div style="font-size:10px;color:#8888aa;font-family:monospace">W: ${u.wins||0} | P: ${u.losses||0} | ${wr}% wygr.${streakStr}</div>
           </div>
           <div class="lb-wins">${u.wins||0}</div>
@@ -7264,9 +7332,9 @@ async function olShowPlayerStats(uid) {
     modal.innerHTML = `
       <div style="background:#13131f;border:1px solid #2a2a40;border-radius:16px;padding:20px 20px 16px;width:100%;max-width:360px" onclick="event.stopPropagation()">
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
-          <div style="width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,#ff3c3c,#880000);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',cursive;font-size:22px;flex-shrink:0">${nick[0].toUpperCase()}</div>
+          <div style="width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,#ff3c3c,#880000);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',cursive;font-size:22px;flex-shrink:0">${escH(nick[0].toUpperCase())}</div>
           <div style="text-align:left">
-            <div style="font-family:'Bebas Neue',cursive;font-size:20px;letter-spacing:1px">${nick}</div>
+            <div style="font-family:'Bebas Neue',cursive;font-size:20px;letter-spacing:1px">${escH(nick)}</div>
             <div style="font-size:10px;color:#8888aa;font-family:monospace">${u.games||0} gier · ${wr}% wygranych</div>
           </div>
           <button onclick="document.getElementById('lb-player-modal').remove()" style="margin-left:auto;background:none;border:none;color:#8888aa;font-size:20px;cursor:pointer;line-height:1">✕</button>
@@ -7665,7 +7733,7 @@ if('serviceWorker' in navigator && window.isSecureContext){
     <div class="order-modal-title">⚙️ KOLEJNOŚĆ GRACZY</div>
     <div class="order-players-grid" id="order-players-grid"></div>
     <div style="margin-bottom:16px;padding:12px;background:rgba(255,140,0,.1);border:1px solid rgba(255,140,0,.3);border-radius:8px;font-size:12px;color:#ff8c00;text-align:center;font-family:monospace">
-      Kliknij na graczy w kolejności: 1️⃣ 2️⃣ 3️⃣ 4️⃣
+      Kliknij na graczy w kolejności rzucania
     </div>
     <div class="order-actions">
       <button class="order-cancel-btn" onclick="cancelOrderSelection()">ANULUJ</button>
@@ -7910,7 +7978,7 @@ async function rchatSend() {
   try {
     await fb.addDoc(ref, {
       uid: user.uid,
-      nick: user.displayName || user.email.split('@')[0] || 'Gracz',
+      nick: safeNick(user.displayName || user.email.split('@')[0]) || 'Gracz',
       text: text,
       ts: fb.serverTimestamp()
     });
@@ -8031,7 +8099,7 @@ async function rchatSendAudio(dataUrl, durationSec) {
   try {
     await fb.addDoc(ref, {
       uid: user.uid,
-      nick: user.displayName || user.email.split('@')[0] || 'Gracz',
+      nick: safeNick(user.displayName || user.email.split('@')[0]) || 'Gracz',
       audio: dataUrl,
       audioDuration: durationSec,
       text: '🎤 Wiadomość głosowa (' + durationSec + 's)',
@@ -8077,7 +8145,7 @@ function olChatSubscribe() {
   var fb = getFb();
   if (!fb) return;
   var ref = fb.collection(fb.db, 'globalChat');
-  var q = fb.query(ref, fb.orderBy('ts', 'asc'), fb.limit(80));
+  var q = fb.query(ref, fb.orderBy('ts', 'desc'), fb.limit(80));
   _olChatFirstSnap = true;
   _olChatUnsub = fb.onSnapshot(q, function(snap) {
     var msgs = document.getElementById('ol-chat-msgs');
@@ -8099,7 +8167,7 @@ function olChatSubscribe() {
     if (newFromOthers > 0) playChatSound();
 
     msgs.innerHTML = '';
-    snap.forEach(function(docSnap) {
+    snap.docs.slice().reverse().forEach(function(docSnap) {
       var d = docSnap.data();
       var isMe = user && d.uid === user.uid;
       var isSys = d.type === 'system';
@@ -8149,7 +8217,7 @@ async function olChatSend() {
   try {
     await fb.addDoc(ref, {
       uid: user.uid,
-      nick: user.displayName || user.email.split('@')[0] || 'Gracz',
+      nick: safeNick(user.displayName || user.email.split('@')[0]) || 'Gracz',
       text: text,
       ts: fb.serverTimestamp()
     });
@@ -9558,7 +9626,7 @@ function renderHud(){
   const mode=gm();let sc='';
   if(mode==='x01'||mode==='sum'){const r=remaining();sc=r!==null?r:'';}
   else if(mode==='cricket')sc=G.cScores?G.cScores[G.cp]:'';
-  h.innerHTML='<div class="nm">'+(G.players[G.cp]||'')+'</div><div class="sc">'+sc+'</div>';
+  h.innerHTML='<div class="nm">'+escH(G.players[G.cp]||'')+'</div><div class="sc">'+sc+'</div>';
 }
 function drawBoard(ctx,H,cw,ch,col,alpha,lw){
   ctx.save();ctx.globalAlpha=alpha;ctx.strokeStyle=col;ctx.lineWidth=lw;
@@ -9877,7 +9945,7 @@ function dmRender(){
   $('dm-round').innerHTML='R'+(G.round||1)+' <small>· LEG '+(G.currentLeg||1)+(G.legs>1?'/'+G.legs:'')+'</small>';
   const me=isOnline()?OL.myIndex:-1;
   $('dm-others').innerHTML=G.players.map((n,i)=>i===cp?'':'<div><span>'+n+(i===me?' (TY)':'')+'</span><b>'+(cr?(G.cScores||[])[i]:G.scores[i])+'</b></div>').join('');
-  $('dm-who').innerHTML='<i></i>'+(mine?(isOnline()?'TWOJA KAMERA · NA ŻYWO':'KAMERA'):'KAMERA: '+(G.players[cp]||'RYWAL'));
+  $('dm-who').innerHTML='<i></i>'+(mine?(isOnline()?'TWOJA KAMERA · NA ŻYWO':'KAMERA'):'KAMERA: '+escH(G.players[cp]||'RYWAL'));
   const nb=$('dm-next');if(nb){nb.disabled=isOnline()&&!myTurn();nb.textContent=ending?'✓ ZATWIERDŹ':'NASTĘPNA RUNDA';}
   $('dm-zoom').textContent=(S.zoom||1)+'x';
 }
@@ -9890,7 +9958,7 @@ function dmRenderTrain(md){
   let big='',name='',side='',sideL='',co='',info='';
   if(md==='atc'){const cp=(turn.length&&turn[0].sc._cp!=null)?turn[0].sc._cp:G.cp,t=G.atcT[cp];big=t>20?'✓':String(t);name=G.players[cp]||'';sideL='RZUT';side=Math.min(3,turn.length+1)+'/3';
     $('dm-turn').textContent=darts.filter((d,i)=>turn[i]&&turn[i].sc._trHit).length;
-    info=G.players.map((n,i)=>i===cp?'':'<div><span>'+n+'</span><b>'+(G.atcT[i]>20?'✓':G.atcT[i])+'</b></div>').join('');
+    info=G.players.map((n,i)=>i===cp?'':'<div><span>'+escH(n)+'</span><b>'+(G.atcT[i]>20?'✓':G.atcT[i])+'</b></div>').join('');
     $('dm-mode').innerHTML='AROUND THE CLOCK';}
   else{big=trDone()?'✓':trTarget();name=(TR.icon||'')+' '+(TR.name||'');
     if(TR.id===3){const t=CO_TARGETS[TR.step];const rem=t-trVisitSum();sideL='ZOSTAŁO';side=trDone()?'—':String(rem);
@@ -9911,14 +9979,20 @@ function dmRenderTrain(md){
 function dmSendTick(){
   if(!dmOn||!running||!isOnline()||dmSending||!video||video.readyState<2||!vw)return;
   if(!myTurn()||!camReady)return;
-  if(Date.now()-(window.__dmLastSend||0)<700)return;window.__dmLastSend=Date.now();
+  // Oszczędnie: obraz co 1,5 s, a położenie lotek od razu, gdy się zmieni (mały zapis bez obrazu)
+  const _now=Date.now(),R=viewRect(1);
+  const darts=curDarts().map(d=>({l:d.lbl+(d.un?'?':''),v:d.val,x:d.tip?+((d.tip[0]*vw-R.sx)/R.sw).toFixed(4):null,y:d.tip?+((d.tip[1]*vh-R.sy)/R.sh).toFixed(4):null}));
+  const _dj=JSON.stringify([G.cp,darts]);
+  const frameDue=_now-(window.__dmLastSend||0)>=1500, dartsChanged=_dj!==window.__dmLastDarts&&_now-(window.__dmLastDartSend||0)>=300;
+  if(!frameDue&&!dartsChanged)return;
+  window.__dmLastDarts=_dj;window.__dmLastDartSend=_now;if(frameDue)window.__dmLastSend=_now;
   dmSending=true;
   try{
-    const N=360,R=viewRect(1);sendCv.width=N;sendCv.height=N;sendCv.getContext('2d').drawImage(video,R.sx,R.sy,R.sw,R.sh,0,0,N,N);
-    const b64=sendCv.toDataURL('image/jpeg',0.6).split(',')[1];
-    const darts=curDarts().map(d=>({l:d.lbl+(d.un?'?':''),v:d.val,x:d.tip?+((d.tip[0]*vw-R.sx)/R.sw).toFixed(4):null,y:d.tip?+((d.tip[1]*vh-R.sy)/R.sh).toFixed(4):null}));
     const{db,doc,setDoc}=window._fb,uid=window._fbUser.uid;
-    setDoc(doc(db,'wrc_cams',G._onlineRoomId),{[uid+'_frame']:b64,[uid+'_seq']:++dmSeq,[uid+'_dm']:{cp:G.cp,darts,t:Date.now()},ts:Date.now()},{merge:true})
+    const upd={[uid+'_dm']:{cp:G.cp,darts,t:_now},ts:_now};
+    if(frameDue){const N=360;sendCv.width=N;sendCv.height=N;sendCv.getContext('2d').drawImage(video,R.sx,R.sy,R.sw,R.sh,0,0,N,N);
+      upd[uid+'_frame']=sendCv.toDataURL('image/jpeg',0.55).split(',')[1];upd[uid+'_seq']=++dmSeq;}
+    setDoc(doc(db,'wrc_cams',G._onlineRoomId),upd,{merge:true})
       .catch(e=>lg('wysyłka kamery: '+(e.code||e.message))).finally(()=>{dmSending=false;});
   }catch(e){dmSending=false;}
 }
@@ -10919,7 +10993,7 @@ function renderBox(){
   const box=ensureBox();if(!box||!room)return;
   const ps=room.players||[],cr=room.camReady||{},mine=cr[me()]===true;
   box.innerHTML='<button class="cc-btn'+(mine?' on':'')+'" onclick="OLBull.toggle()"><span>📷 GRAM Z KAMERĄ (AUTO-LICZENIE)</span><i>'+(mine?'TAK':'NIE')+'</i></button>'+
-    ps.map(p=>'<div class="cc-row"><b>'+p.nick+(p.uid===me()?' (Ty)':'')+'</b><span>'+(cr[p.uid]===true?'📷 kamera':'⌨️ ręcznie')+'</span></div>').join('')+
+    ps.map(p=>'<div class="cc-row"><b>'+escH(p.nick)+(p.uid===me()?' (Ty)':'')+'</b><span>'+(cr[p.uid]===true?'📷 kamera':'⌨️ ręcznie')+'</span></div>').join('')+
     '<div class="cc-sum">'+(allCam(room)?'🎯 Wszyscy z kamerą → o kolejności zdecyduje RZUT DO BULLA (jedna lotka, kto bliżej środka, zaczyna).':'🎲 O kolejności zdecyduje rzut kostką. Rzut do bulla — gdy wszyscy włączą kamerę.')+'</div>';
 }
 async function setMine(v){
@@ -10981,7 +11055,7 @@ function openBull(){
 function boardHtml(r){
   const ps=(r&&r.players)||[],bo=(r&&r.bullOff)||{},rd=(r&&r.bullRound)||0;
   return ps.map((p,i)=>{const e=bo[i]&&bo[i].round===rd?bo[i]:null;
-    return'<div><span>'+p.nick+(p.uid===me()?' (Ty)':'')+'</span><b>'+(e?(i===myIdx()||allIn(r)?(e.mm===null?'MISS':e.mm.toFixed(1)+' mm'):'✓ rzucił'):'…')+'</b></div>';}).join('');
+    return'<div><span>'+escH(p.nick)+(p.uid===me()?' (Ty)':'')+'</span><b>'+(e?(i===myIdx()||allIn(r)?(e.mm===null?'MISS':e.mm.toFixed(1)+' mm'):'✓ rzucił'):'…')+'</b></div>';}).join('');
 }
 function allIn(r){const ps=(r&&r.players)||[],bo=(r&&r.bullOff)||{},rd=r.bullRound||0;return ps.length>=2&&ps.every((p,i)=>bo[i]&&bo[i].round===rd);}
 function onRoom(r){
@@ -11000,7 +11074,7 @@ function decide(r){
   const tie=best===Infinity||winners.length>1||dist.filter(d=>Math.abs(d-best)<0.5).length>1;
   const gr=document.getElementById('bo-gr');gr.style.gridTemplateColumns='repeat('+Math.min(ps.length,2)+',1fr)';
   gr.innerHTML=ps.map((p,i)=>'<div class="pl'+(!tie&&i===winners[0]?' win':'')+'">'+(bo[i].img?'<img src="'+bo[i].img+'">':'<img>')+
-    '<div class="n">'+p.nick+(p.uid===me()?' (Ty)':'')+'</div><div class="d">'+(dist[i]===Infinity?'MISS':dist[i].toFixed(1)+'<small> mm</small>')+'</div></div>').join('');
+    '<div class="n">'+escH(p.nick)+(p.uid===me()?' (Ty)':'')+'</div><div class="d">'+(dist[i]===Infinity?'MISS':dist[i].toFixed(1)+'<small> mm</small>')+'</div></div>').join('');
   const msg=document.getElementById('bo-msg');
   document.getElementById('bo-res').classList.add('on');
   if(tie){msg.textContent=best===Infinity?'🔄 Nikt nie trafił w tarczę — rzucacie jeszcze raz':'🔄 REMIS — rzucacie jeszcze raz';
@@ -11196,7 +11270,7 @@ function renderBoard(){
 function renderPanel(){
   const el=document.getElementById('xg-in');if(!el)return;
   const p=P(),coHint=(X.kind==='co121'&&typeof getCheckoutForScore==='function'&&p.rem<=170)?(getCheckoutForScore(p.rem)||''):'';
-  el.querySelector('.xg-target').innerHTML='<b>'+(X.over?'KONIEC':'CEL: '+tgtLabel())+'</b><span>'+G.players[X.cp]+'<br>'+(coHint?'🎯 '+coHint:(X.kind==='killer'?'numery: '+X.p.map((q,i)=>G.players[i].slice(0,6)+' '+q.num).join(', '):''))+'</span>';
+  el.querySelector('.xg-target').innerHTML='<b>'+(X.over?'KONIEC':'CEL: '+tgtLabel())+'</b><span>'+escH(G.players[X.cp])+'<br>'+(coHint?'🎯 '+coHint:(X.kind==='killer'?'numery: '+X.p.map((q,i)=>escH(G.players[i].slice(0,6))+' '+q.num).join(', '):''))+'</span>';
   el.querySelector('.xg-darts').innerHTML=[0,1,2].map(i=>{const d=X.darts[i];return'<div class="'+(d?(d.hit?'hit':'miss'):'')+'">'+(d?d.lbl:'-')+'</div>';}).join('');
   ['xg-m1','xg-m2','xg-m3'].forEach((id,k)=>{const b=document.getElementById(id);if(b)b.classList.toggle('m'+(k+1),mult===k+1);});
 }
@@ -11372,7 +11446,7 @@ window.olRefreshLb=async function(){
     let h=tabs(),i=0;
     snap.forEach(doc=>{i++;const u=doc.data(),t=tier(u.elo||START),cls=['g','s','b'][i-1]||'',wr=u.games>0?Math.round(u.wins/u.games*100):0;
       h+='<div class="elo-row'+(doc.id===me?' me':'')+'" onclick="olShowPlayerStats(\''+doc.id.replace(/'/g,"\\'")+'\')"><div class="rk '+cls+'">'+i+'</div><div class="tier">'+t[1]+'</div>'+(window.PC?PC.mini(u):'')+
-        '<div class="nm"><b>'+(u.nick||'Gracz')+'</b><small>'+t[2]+' · '+mecz(u.eloGames||0)+' · '+wr+'% wygr.</small></div><div class="el">'+(u.elo||START)+'<small>ELO</small></div></div>';});
+        '<div class="nm"><b>'+escH(u.nick||'Gracz')+'</b><small>'+t[2]+' · '+mecz(u.eloGames||0)+' · '+wr+'% wygr.</small></div><div class="el">'+(u.elo||START)+'<small>ELO</small></div></div>';});
     if(!i)h+='<div style="text-align:center;color:#8888aa;padding:24px;font-family:monospace;font-size:12px">Brak meczów rankingowych.<br>Zagraj mecz online 1 na 1, żeby trafić do rankingu ELO.</div>';
     h+='<div style="font-size:10px;color:#8888aa;font-family:monospace;padding:10px 4px;line-height:1.5">Każdy startuje z 1000 ELO. Wygrana z mocniejszym daje więcej punktów, porażka ze słabszym zabiera więcej. Liczą się mecze online 1 na 1.<br>🥉 &lt;900 · 🥈 900+ · 🥇 1100+ · 💠 1300+ · 💎 1500+ · 👑 1700+</div>';
     list.innerHTML=h;
@@ -11706,7 +11780,7 @@ const RKEY='dm_recent_opp',TTL=15*60*1000;
 let unsub=null,watchUid=null,current=null,seen={},searchT=null;
 const fbOk=()=>{try{return !!(getFb()&&getFbUser());}catch(e){return false;}};
 const me=()=>{try{return getFbUser().uid;}catch(e){return null;}};
-const myNick=()=>{const u=getFbUser();return u?(u.displayName||(u.email||'').split('@')[0]||'Gracz'):'Gracz';};
+const myNick=()=>{const u=getFbUser();return u?(safeNick(u.displayName||(u.email||'').split('@')[0])||'Gracz'):'Gracz';};
 const esc=s=>String(s||'').replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));
 const modeName=m=>({501:'501',301:'301',cricket:'CRICKET',atc:'AROUND THE CLOCK'})[m]||String(m||'').toUpperCase();
 function recent(){try{return JSON.parse(localStorage.getItem(RKEY)||'[]');}catch(e){return[];}}
@@ -11837,7 +11911,7 @@ async function enablePush(silent){
       const m=await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging.js');
       if(!(await m.isSupported()))return{ok:true,msg:'Włączone (przy otwartej aplikacji)'};
       const token=await m.getToken(m.getMessaging(getFb().db.app),{vapidKey:window.DM_PUSH_VAPID_KEY,serviceWorkerRegistration:reg});
-      if(token){await getFb().setDoc(getFb().doc(getFb().db,'users',me()),{fcmTokens:{[token]:Date.now()}},{merge:true});localStorage.setItem('dm_push_tok',token);}
+      if(token){await getFb().setDoc(getFb().doc(getFb().db,'users',me(),'private','data'),{fcmTokens:{[token]:Date.now()}},{merge:true});localStorage.setItem('dm_push_tok',token);}
     }
     return{ok:true};
   }catch(e){console.log('push',e);return{ok:true,msg:'Włączone (przy otwartej aplikacji)'};}
@@ -11845,7 +11919,7 @@ async function enablePush(silent){
 async function disablePush(){
   try{localStorage.setItem('dm_push_off','1');}catch(e){}
   const tok=localStorage.getItem('dm_push_tok');
-  if(tok&&fbOk()){try{const fb=getFb();await fb.updateDoc(fb.doc(fb.db,'users',me()),{['fcmTokens.'+tok]:fb.deleteField()});}catch(e){console.log('push off',e);}}
+  if(tok&&fbOk()){try{const fb=getFb();await fb.updateDoc(fb.doc(fb.db,'users',me(),'private','data'),{['fcmTokens.'+tok]:fb.deleteField()});}catch(e){console.log('push off',e);}}
   try{localStorage.removeItem('dm_push_tok');}catch(e){}
 }
 const bellOn=()=>('Notification' in window)&&Notification.permission==='granted'&&localStorage.getItem('dm_push_off')!=='1';
@@ -12563,7 +12637,7 @@ const ACH=[
  ['w10','🏆','Zwycięzca','10 wygranych meczów','Mecze'],['w50','👑','Dominator','50 wygranych meczów','Mecze'],['s5','🔥','W gazie','5 wygranych online z rzędu','Mecze'],
  ['t180','💯','Pierwsza 180','Rzuć maksa — 180','Punktowanie'],['t180x10','🚀','Seryjny maksymalista','10 × 180','Punktowanie'],['t180x50','🌋','Maszyna do 180','50 × 180','Punktowanie'],
  ['ton100','💪','Sto po sto','100 tur za 100+','Punktowanie'],['a60','📈','Solidna średnia','Mecz ze średnią 60+','Punktowanie'],['a80','🎖️','Klasa ligowa','Mecz ze średnią 80+','Punktowanie'],['a100','🦾','Ton average','Mecz ze średnią 100+','Punktowanie'],
- ['co100','💰','Ton-plus checkout','Zejście ze 100 lub więcej','Zejścia'],['co150','💎','Wielki finisz','Zejście ze 150 lub więcej','Zejścia'],['co170','🐟','Big Fish','Zejście ze 170','Zejścia'],
+ ['co100','💰','Zejście ze stówy','Zejście ze 100 lub więcej','Zejścia'],['co150','💎','Wielki finisz','Zejście ze 150 lub więcej','Zejścia'],['co170','🐟','Big Fish','Zejście ze 170','Zejścia'],
  ['l15','⚡','Szybki leg','Leg 501 w 15 lotkach lub mniej','Zejścia'],['l12','🌟','Błyskawica','Leg 501 w 12 lotkach lub mniej','Zejścia'],['l9','🏅','9-darter','Perfekcyjny leg 501 — 9 lotek','Zejścia'],
  ['r1','🌐','Rankingowy','Pierwszy mecz rankingowy online','Ranking'],['eZl','🥇','Złota ranga','Osiągnij rangę ZŁOTO','Ranking'],['ePl','💠','Platynowa ranga','Osiągnij rangę PLATYNA','Ranking'],
  ['eDi','💎','Diamentowa ranga','Osiągnij rangę DIAMENT','Ranking'],['eMi','👑','Mistrz','Osiągnij rangę MISTRZ','Ranking'],['season','🏆','Podium sezonu','Top 3 w miesięcznym sezonie ELO','Ranking'],
@@ -13448,7 +13522,7 @@ const CACHE={},NICK2UID={};let UIDS=[];
 /* ---------- avatar ---------- */
 function avHTML(av,nick,size){
   const st=size?'width:'+size+'px;height:'+size+'px;font-size:'+Math.round(size*.46)+'px;':'';
-  if(av&&av.t==='p'&&/^data:image\/(jpeg|png|webp);base64,/.test(av.d||''))return'<div class="pc-av" style="'+st+'"><img alt="" src="'+av.d+'"></div>';
+  if(av&&av.t==='p'&&/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+\/=]+$/.test(av.d||''))return'<div class="pc-av" style="'+st+'"><img alt="" src="'+av.d+'"></div>';
   if(av&&av.t==='e'){const c=COL[av.c|0]||COL[0];return'<div class="pc-av" style="'+st+'background:radial-gradient(circle at 30% 25%,'+c[0]+','+c[1]+')"><span class="em">'+esc(av.e||'🎯')+'</span></div>';}
   return'<div class="pc-av" style="'+st+'background:linear-gradient(135deg,#ff3c3c,#880000)">'+esc((String(nick||'G').trim()[0]||'G').toUpperCase())+'</div>';
 }
@@ -13862,7 +13936,7 @@ function det(k){
     else{const w=L.filter(m=>m.w).length,l=L.length-w,am=avgOf(L.map(m=>m.ma)),ao=avgOf(L.map(m=>m.oa));
       const lf=L.reduce((s,m)=>s+m.ml,0),la=L.reduce((s,m)=>s+m.ol,0),best=L.reduce((a,m)=>m.ma>(a?a.ma:0)?m:a,null);
       const me1=k==='h2h'?'Ty':nick,op1=k==='h2h'?nick:'rywale';
-      b=donut([{v:w,c:'#00ff88',l:k==='h2h'?'Twoje wygrane':'Wygrane'},{v:l,c:'#ff3c3c',l:k==='h2h'?'Wygrane '+nick:'Porażki'}],w+':'+l,L.length+' meczów')+
+      b=donut([{v:w,c:'#00ff88',l:k==='h2h'?'Twoje wygrane':'Wygrane'},{v:l,c:'#ff3c3c',l:k==='h2h'?'Wygrane '+escH(nick):'Porażki'}],w+':'+l,L.length+' meczów')+
         '<div class="pc-kpis">'+'<div><b style="color:#00e5ff">'+(am?am.toFixed(1):'—')+'</b><small>śr. '+esc(me1)+'</small></div><div><b style="color:#ff8c00">'+(ao?ao.toFixed(1):'—')+'</b><small>śr. '+esc(op1)+'</small></div><div><b>'+lf+':'+la+'</b><small>legi</small></div></div>'+
         '<div class="pc-box"><div class="pc-bt">ŚREDNIA MECZ PO MECZU <span>niebieska = '+esc(me1)+' · pomarańczowa = '+esc(op1)+'</span></div><canvas id="pc-d1"></canvas></div>'+
         (best&&best.ma?'<div class="pc-zc"><b>NAJLEPSZY MECZ</b><span>'+dts(best.t)+' vs '+esc(best.on)+' — średnia <em>'+best.ma.toFixed(1)+'</em>, '+(best.w?'wygrana':'porażka')+(best.ml||best.ol?' '+best.ml+':'+best.ol:'')+'</span></div>':'')+
@@ -14089,7 +14163,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&ov&&ov.classList.co
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fb=()=>{try{return getFb();}catch(e){return null;}};
 const me=()=>{try{return getFbUser();}catch(e){return null;}};
-const myNick=()=>{const u=me();if(MYDOC&&MYDOC.nick)return MYDOC.nick;if(u&&u.displayName)return u.displayName;const el=document.getElementById('ol-username-display');return(el&&el.textContent.trim())||'Gracz';};
+const myNick=()=>{const u=me();if(MYDOC&&MYDOC.nick)return safeNick(MYDOC.nick)||'Gracz';if(u&&u.displayName)return safeNick(u.displayName)||'Gracz';const el=document.getElementById('ol-username-display');return(el&&el.textContent.trim())||'Gracz';};
 const uref=uid=>fb().doc(fb().db,'users',uid);
 const av=(u,n)=>window.PC?PC.av(u&&u.avatar,n||(u&&u.nick)):'';
 const SEAS=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');};
@@ -14254,7 +14328,7 @@ function tNew(){
     '<button class="x2-btn gold wide" onclick="X3._tcreate()">🏆 ZAŁÓŻ I ZAPISZ SIĘ</button><div class="pc-cap">Zapraszasz znajomych do zapisów. Gdy komplet — losujesz drabinkę. Mecze gracie w zwykłych pokojach online, wynik wpisze się sam.</div>','X3.tours()');
 }
 async function tCreate(){
-  const D=TDRAFT,u=me();const name=(D.name||'').trim()||('Turniej '+myNick());
+  const D=TDRAFT,u=me();const name=((D.name||'').replace(/[<>"`]/g,'').trim()||('Turniej '+myNick())).slice(0,40);
   try{const r=await fb().addDoc(tcol(),{name,size:D.size,mode:D.mode,legs:D.legs,dOut:D.dOut,status:'open',host:u.uid,hostNick:myNick(),players:[{uid:u.uid,nick:myNick()}],m:[],createdAt:Date.now()});
     addMyTour(r.id);toast('🏆 Turniej założony');tOpen(r.id);}catch(e){document.getElementById('x3-bd').innerHTML=err(e);}
 }
@@ -14548,7 +14622,14 @@ function newPc(){
   const pc=new RTCPeerConnection({iceServers:ICE});RTC.pc=pc;RTC.state='connecting';
   RTC.tr=pc.addTransceiver('audio',{direction:'sendrecv'});
   if(RTC.track)RTC.tr.sender.replaceTrack(RTC.track).catch(()=>{});
-  pc.ontrack=e=>{const st=e.streams&&e.streams[0]?e.streams[0]:new MediaStream([e.track]);const a=audioEl();a.srcObject=st;a.muted=VM.muted;a.play().catch(()=>{});
+  // obraz z kamery też leci bezpośrednio między telefonami (bez Firebase)
+  RTC.vtr=pc.addTransceiver('video',{direction:'sendrecv'});RTC.vOn=false;RTC.vstream=null;
+  if(RTC.vtrack)RTC.vtr.sender.replaceTrack(RTC.vtrack).catch(()=>{});
+  pc.ontrack=e=>{
+    if(e.track.kind==='video'){RTC.vstream=new MediaStream([e.track]);
+      const on=()=>{RTC.vOn=true;window.dispatchEvent(new Event('dm-rtc-video'));},off=()=>{RTC.vOn=false;window.dispatchEvent(new Event('dm-rtc-video'));};
+      e.track.onunmute=on;e.track.onmute=off;e.track.onended=off;if(!e.track.muted)on();return;}
+    const st=new MediaStream([e.track]);const a=audioEl();a.srcObject=st;a.muted=VM.muted;a.play().catch(()=>{});
   };
   pc.onconnectionstatechange=()=>{RTC.state=pc.connectionState;
     if(pc.connectionState==='connected'){VM.hadAudio=true;if(wrcState.micActive&&RTC.track){try{wrcStopMic();}catch(e){}VM.fallback=false;}}
@@ -14592,7 +14673,7 @@ async function rtcStart(room){
 }
 function rtcStop(){
   clearTimeout(RTC.retry);if(RTC.unsub){try{RTC.unsub();}catch(e){}RTC.unsub=null;}
-  if(RTC.pc){try{RTC.pc.close();}catch(e){}RTC.pc=null;}RTC.tr=null;RTC.room=null;RTC.role=null;RTC.state='idle';RTC.gotSes=0;RTC.ses=0;RTC.lastWant=0;
+  if(RTC.pc){try{RTC.pc.close();}catch(e){}RTC.pc=null;}RTC.tr=null;RTC.vtr=null;RTC.vOn=false;RTC.vstream=null;try{window.dispatchEvent(new Event('dm-rtc-video'));}catch(e){}RTC.room=null;RTC.role=null;RTC.state='idle';RTC.gotSes=0;RTC.ses=0;RTC.lastWant=0;
   if(RTC.audio)RTC.audio.srcObject=null;if(RTC.anCtx){try{RTC.anCtx.close();}catch(e){}RTC.anCtx=null;}RTC.an=null;
 }
 const rtcLive=()=>RTC.state==='connected';
@@ -14658,6 +14739,13 @@ function sync(){
 }
 setInterval(sync,500);
 window.X4={mic,mute,state:()=>Object.assign({},VM,{rtc:RTC.state,role:RTC.role}),_vm:VM,_rtc:RTC};
+// API obrazu przez połączenie bezpośrednie (używa go „Podgląd kamery rywala”)
+window.RTCV={
+  setTrack(t){RTC.vtrack=t||null;if(RTC.vtr)RTC.vtr.sender.replaceTrack(RTC.vtrack).then(()=>{try{const p=RTC.vtr.sender.getParameters();if(p.encodings&&p.encodings[0]){p.encodings[0].maxBitrate=700000;RTC.vtr.sender.setParameters(p).catch(()=>{});}}catch(e){}}).catch(()=>{});},
+  live:()=>RTC.state==='connected'&&!!RTC.vtr,
+  remoteOn:()=>RTC.state==='connected'&&!!RTC.vOn&&!!RTC.vstream,
+  stream:()=>RTC.vstream
+};
 })();
 </script>
 
@@ -14825,7 +14913,7 @@ async function frameTick(){
     const need=room?(Date.now()-FR.watch<45000):ON;
     const v=document.getElementById('ac-video');
     FR.sending=!!(need&&v&&v.videoWidth&&!v.paused&&!(room&&typeof wrcState!=='undefined'&&wrcState.sharing));
-    if(!FR.sending||Date.now()-FR.sentAt<380)return;
+    if(!FR.sending||Date.now()-FR.sentAt<1000)return;
     FR.busy=true;FR.sentAt=Date.now();
     if(!FR.cv){FR.cv=document.createElement('canvas');FR.cv.width=FR.cv.height=480;}
     const c=FR.cv.getContext('2d'),[x,y,w,h]=camCrop(v);c.fillStyle='#000';c.fillRect(0,0,480,480);
@@ -15323,6 +15411,20 @@ setTimeout(()=>{try{const a=get();let ch=false;(G.players||[]).forEach((p,i)=>{c
     const sub=document.getElementById('exit-home-sub');if(sub){let t='';try{if(typeof OL!=='undefined'&&OL&&OL.currentRoomId)t='opuszczasz mecz online';else if(typeof G!=='undefined'&&G&&G.active)t='kończy trwający mecz';}catch(e){}sub.textContent=t;sub.style.display=t?'block':'none';}
     m.style.display='flex';}
   function hide(){const m=modal();if(m)m.style.display='none';}
+  // zamyka najwyżej położone otwarte okno (raport, dźwięki, statystyki gracza itd.)
+  function closeTopOverlay(){
+    const vis=el=>{if(!el||el.id==='exit-modal')return false;const cs=getComputedStyle(el);if(cs.display==='none'||cs.visibility==='hidden'||+cs.opacity===0)return false;const r=el.getBoundingClientRect();return r.width>=innerWidth*.8&&r.height>=innerHeight*.6;};
+    const cand=[...document.querySelectorAll('.modal.active,.modal-overlay.active,[id$="-modal"].active,[id$="-overlay"].show,[id$="-modal"],[class*="overlay"],[class*="modal"]')]
+      .filter(el=>{const cs=getComputedStyle(el);return cs.position==='fixed'&&vis(el);});
+    if(!cand.length)return false;
+    cand.sort((a,b)=>(parseInt(getComputedStyle(b).zIndex)||0)-(parseInt(getComputedStyle(a).zIndex)||0));
+    const top=cand[0];
+    if(top.id==='win-overlay'||top.id==='lose-overlay'||top.id==='dice-roll-modal')return false;
+    const btn=[...top.querySelectorAll('button,[onclick],.close,[class*="close"]')].find(b=>/^\s*(✕|×|✖|X|ZAMKNIJ|WRÓĆ|ANULUJ|←)\s*$/i.test(b.textContent||'')||/close|zamknij/i.test(b.getAttribute('onclick')||'')||/close/i.test(b.className||''));
+    if(btn){btn.click();return true;}
+    top.classList.remove('active','show','open');if(getComputedStyle(top).display!=='none'&&vis(top))top.style.display='none';
+    return true;
+  }
   async function goHome(){
     try{if(window.AutoCam&&AutoCam.close)AutoCam.close();}catch(e){}
     try{if(window.PC&&PC.close)PC.close();}catch(e){}
@@ -15340,6 +15442,7 @@ setTimeout(()=>{try{const a=get();let ch=false;(G.players||[]).forEach((p,i)=>{c
     if(m&&m.style.display==='flex'){hide();return;}                      // „wstecz” przy otwartym pytaniu = zostaję
     const menu=document.getElementById('slide-menu');
     if(menu&&menu.classList.contains('open')){try{closeMenu();}catch(e){}return;} // najpierw zamknij menu
+    if(closeTopOverlay()){arm();return;}                                   // potem zamknij otwarte okno
     show();
   });
   document.addEventListener('click',function(e){
@@ -15349,6 +15452,33 @@ setTimeout(()=>{try{const a=get();let ch=false;(G.players||[]).forEach((p,i)=>{c
   });
 })();
 </script>
+<!-- ===== Paczka 2: układ ekranu gry i wygoda (nadpisuje wcześniejsze style) ===== -->
+<style id="pk2-ui">
+/* podpowiedź zejścia: zawsze zajmuje to samo miejsce w X01 – klawiatura nie skacze */
+#co-hint.co-x01{display:flex!important;align-items:center;justify-content:space-between;gap:10px;min-height:36px;padding:4px 10px!important;margin-bottom:6px!important;visibility:hidden}
+#co-hint.co-x01.on{visibility:visible}
+#co-hint:not(.co-x01){display:none!important}
+/* SINGLE / DOUBLE / TRIPLE – wygodne do trafienia palcem */
+.mult-btn{min-height:44px!important;display:flex!important;align-items:center;justify-content:center;font-size:15px!important;letter-spacing:1px!important}
+/* linijka pod nickiem gracza: bez ucinania, legi jako plakietka */
+.player-sub{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:10px!important}
+.leg-badge{display:inline-block;background:rgba(255,140,0,.18);border:1px solid rgba(255,140,0,.5);color:#ff8c00;border-radius:6px;padding:0 5px;margin-right:5px;font-weight:700}
+/* komunikaty nie blokują przycisków pod spodem */
+#toast{pointer-events:none}
+/* większe pola dotyku */
+.remove-player-btn{width:44px!important;height:44px!important}
+#add-player-btn{min-height:44px}
+.modal-close{min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center}
+.st-filter-btn{min-height:40px}
+/* niskie ekrany (np. 360×740) – mniejsze ikonki lotek, żeby ekran gry mieścił się bez przewijania */
+@media (max-height:800px){
+  .dart-icon{height:30px!important;min-height:0!important;overflow:hidden}
+  .dart-icon img,.dart-icon svg{max-height:30px!important;width:auto!important}
+  .throw-slot{min-height:0!important;height:34px!important;padding-top:0!important;padding-bottom:0!important;display:flex!important;align-items:center;justify-content:center}
+}
+/* ostatnia pozycja menu nie chowa się pod dolnym paskiem */
+.slide-menu{padding-bottom:calc(90px + env(safe-area-inset-bottom))!important;overflow-y:auto}
+</style>
 </body>
 </html>
 
