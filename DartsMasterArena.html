@@ -1453,6 +1453,11 @@ input{outline:none}
 
 <script>
 // Zabezpieczenie tekstu wstawianego do HTML (nicki, nazwy pokoi itp.)
+// Oszczędzanie baterii: częste liczniki (≤ 0,7 s) nie pracują, gdy aplikacja jest w tle
+(function(){const _si=window.setInterval;window.setInterval=function(fn,ms){if(typeof fn==='function'&&(+ms||0)<=700){const f=fn,args=[].slice.call(arguments,2);return _si.call(window,function(){try{if(document.hidden&&!(typeof wrcState!=="undefined"&&wrcState&&wrcState.micActive))return;}catch(e){}return f.apply(this,args);},ms);}return _si.apply(window,arguments);};})();
+// cofanie tury: która pozycja historii zostanie cofnięta i czy już jej nie ma
+window.__undoCand=function(){try{if(G.history&&G.history.length)return G.history[G.history.length-1];if(G._legUndo&&G._legUndo.history&&G._legUndo.history.length)return G._legUndo.history[G._legUndo.history.length-1];}catch(e){}return null;};
+window.__inHist=function(h){try{return (G.history||[]).includes(h)||!!(G._legUndo&&G._legUndo.history.includes(h));}catch(e){return true;}};
 window.escH=s=>String(s==null?'':s).replace(/[&<>"'`]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','`':'&#96;'}[c]));
 window.safeNick=s=>String(s==null?'':s).replace(/[<>"`\\]/g,'').replace(/\s+/g,' ').trim().slice(0,20);
 // ===== SLIDE MENU =====
@@ -2851,7 +2856,7 @@ function renderScoreboard(){
       <div class="player-avatar" style="background:${AVGS[i]}">${escH(([...String(name).replace(/^🤖\s*/,'')][0]||'G').toUpperCase())}</div>
       <div style="flex:1">
         <div class="player-name">${escH(name)}</div>
-        <div class="player-sub">${G.legs>1&&isX01?'<span class="leg-badge">LEGI '+G.legWins[i]+'</span>':''}${avg!=='0.0'?'ŚR '+avg+' ':''}${active?'<span style="color:#ff3c3c">▶ TURA</span>':''}${needDI?' <span style="color:#ffd700">⚡D-IN</span>':''}</div>
+        <div class="player-sub">${G.legs>1&&(isX01||(G.mode==='cricket'&&!G._onlineRoomId))?'<span class="leg-badge">LEGI '+G.legWins[i]+'</span>':''}${avg!=='0.0'?'ŚR '+avg+' ':''}${active?'<span style="color:#ff3c3c">▶ TURA</span>':''}${needDI?' <span style="color:#ffd700">⚡D-IN</span>':''}</div>
       </div>
       <div class="player-score${low?' low':''}">${sc}</div>
     </div>`;
@@ -2862,7 +2867,7 @@ function renderScoreboard(){
   const turnLbl = document.getElementById('turn-lbl');
   if(turnLbl) turnLbl.textContent=(G.cp+1)+'/'+G.players.length;
   const legEl=document.getElementById('leg-info-lbl');
-  if(legEl) legEl.textContent=(G.legs>1&&(G.mode==='501'||G.mode==='301'))?('LEG '+G.currentLeg+'/'+G.legs):'';
+  if(legEl) legEl.textContent=(G.legs>1&&(G.mode==='501'||G.mode==='301'||(G.mode==='cricket'&&!G._onlineRoomId)))?('LEG '+G.currentLeg+'/'+G.legs):'';
   
   // Aktualizuj wynik przeciwnika w grze online
   if(G._onlineRoomId || OL.currentRoomId) {
@@ -3396,7 +3401,24 @@ function cricketHit(num){
   const won=CNUMS.every(n=>(G.cMarks[G.cp+'_'+n]||0)>=3);
   if(won){
     const mx=Math.max(...G.cScores);
-    if(G.cScores[G.cp]===mx){SFX.win();showWin(G.players[G.cp],G.round,'—','CRICKET');if(!OL.currentRoomId)recGame(G.players[G.cp]);return;}
+    if(G.cScores[G.cp]===mx){
+      // Mecz na kilka legów (gra lokalna): wygrany leg → nowy leg, mecz kończy się po zdobyciu większości
+      if(G.legs>1&&!OL.currentRoomId&&!G._onlineRoomId){
+        const pi=G.cp;G.legWins[pi]++;
+        if(G.legWins[pi]<Math.ceil(G.legs/2)){
+          SFX.leg&&SFX.leg();toast('🏆 '+G.players[pi]+' wygrywa lega '+G.currentLeg+'!');
+          G.currentLeg++;G.firstPlayerLeg=(G.firstPlayerLeg+1)%G.players.length;
+          G.cMarks={};G.cScores=G.players.map(()=>0);G.cDarts=0;G.cMult=1;
+          G.players.forEach((_,i)=>[15,16,17,18,19,20,25].forEach(n=>{G.cMarks[i+'_'+n]=0;}));
+          G.cp=G.firstPlayerLeg;G.round=1;
+          G.cricketHistory=[{cMarks:{...G.cMarks},cScores:[...G.cScores],cDarts:0,cMult:1,cp:G.cp,round:1}];
+          try{renderCricketBoard();renderScoreboard();}catch(e){}
+          setTimeout(()=>toast('🎯 LEG '+G.currentLeg+': '+G.players[G.cp]+' zaczyna'),1500);
+          return;
+        }
+        SFX.win();showWin(G.players[pi],G.round,'—','CRICKET ('+G.legWins[pi]+'/'+G.legs+')');recGame(G.players[pi]);return;
+      }
+      SFX.win();showWin(G.players[G.cp],G.round,'—','CRICKET');if(!OL.currentRoomId)recGame(G.players[G.cp]);return;}
   }
   if(G.cDarts>=3) toast('3 lotki – naciśnij POTWIERDŹ');
 }
@@ -3731,13 +3753,26 @@ function recGame(winner){
     ps.totalPoints = (ps.totalPoints||0) + d.totalPoints;
     ps.totalDarts  = (ps.totalDarts||0)  + d.totalDarts;
 
-    // High scores
+    // High scores – przedziały jak w PDC: 100–139, 140–179, 180
     d.scores.forEach(r => {
       if(r > ps.best) ps.best = r;
-      if(r >= 100) ps.highest100 = (ps.highest100||0)+1;
-      if(r >= 140) ps.highest140 = (ps.highest140||0)+1;
+      if(r >= 100 && r < 140) ps.highest100 = (ps.highest100||0)+1;
+      if(r >= 140 && r < 180) ps.highest140 = (ps.highest140||0)+1;
       if(r >= 180) { ps.highest180 = (ps.highest180||0)+1; ps.e180 = (ps.e180||0)+1; }
     });
+
+    // First 9 (pierwsze 3 podejścia KAŻDEGO lega, z bustami) i lotki na wygranego lega (tylko X01)
+    if(G.mode==='501'||G.mode==='301'){
+      const all=(G._allHistory&&G._allHistory.length)?G._allHistory:G.history;
+      const legs=[...new Set(all.map(h=>h.leg||1))];
+      legs.forEach(l=>{
+        const lt=all.filter(h=>(h.leg||1)===l);
+        const mine=lt.filter(h=>h.p===idx);
+        mine.slice(0,3).forEach(h=>{ps.f9Points=(ps.f9Points||0)+(h.bust?0:h.sc);ps.f9Darts=(ps.f9Darts||0)+(h.dartsUsed||3);});
+        const last=lt[lt.length-1];
+        if(last&&last.p===idx&&!last.bust&&(l<G.currentLeg||nick===winner)){ps.legsWon=(ps.legsWon||0)+1;ps.legDarts=(ps.legDarts||0)+mine.reduce((a,h)=>a+(h.dartsUsed||3),0);}
+      });
+    }
 
     // Double attempts/hits
     ps.doubleAttempts = (ps.doubleAttempts||0) + (G._gameDoubleAttempts[idx]||0);
@@ -3839,9 +3874,9 @@ function renderStats() {
   const dblPct = dblA > 0 ? Math.round(dblH / dblA * 100) + '%' : '\u2014';
 
   // Darts per leg (average darts to finish one game)
-  const dartsPerLeg = (ps.games > 0 && ps.totalDarts > 0)
-    ? (ps.totalDarts / ps.games).toFixed(1)
-    : '\u2014';
+  const dartsPerLeg = (ps.legsWon > 0 && ps.legDarts > 0)
+    ? (ps.legDarts / ps.legsWon).toFixed(1)
+    : (ps.games > 0 && ps.totalDarts > 0) ? (ps.totalDarts / ps.games).toFixed(1) : '\u2014';
 
   // First 9 average — pierwsze 3 rundy każdej gry (= pierwsze 9 lotek)
   let f9Points = 0, f9Darts = 0;
@@ -3854,9 +3889,9 @@ function renderStats() {
     f9Points += first3.reduce((a, b) => a + b, 0);
     f9Darts  += first3.length * 3;
   });
-  const first9Avg = f9Darts > 0
-    ? ((f9Points / f9Darts) * 3).toFixed(2)
-    : '\u2014';
+  const first9Avg = (ps.f9Darts > 0)
+    ? ((ps.f9Points / ps.f9Darts) * 3).toFixed(2)
+    : f9Darts > 0 ? ((f9Points / f9Darts) * 3).toFixed(2) : '\u2014';
 
   // Streak
   let streak = 0;
@@ -7199,8 +7234,8 @@ async function olRecordWin(winnerIdx) {
     let game180s = 0, game100s = 0, game140s = 0, gameBest = 0;
     finalScores.forEach(sc => {
       if (sc > gameBest) gameBest = sc;
-      if (sc >= 100) game100s++;
-      if (sc >= 140) game140s++;
+      if (sc >= 100 && sc < 140) game100s++;
+      if (sc >= 140 && sc < 180) game140s++;
       if (sc >= 180) game180s++;
     });
 
@@ -7344,7 +7379,7 @@ async function olShowPlayerStats(uid) {
           ${row('% wygranych', wr+'%')}
           ${row('Średnia (3 lotki)', avg)}
           ${row('Średnia z 9 lotek', u.first9Avg||'—')}
-          ${row('Lotek na lega', dpl)}
+          ${row('Lotek na mecz', dpl)}
           ${row('180-tki', u.e180||0)}
           ${row('100+', u.highest100||0)}
           ${row('140+', u.highest140||0)}
@@ -10629,11 +10664,15 @@ if(typeof _ph==='function')window.pushH=function(p,sc,bust,openedDI){
       const ac=window.__acTurnDarts;if(fin&&G.countingMode==='summary'&&ac&&Date.now()-ac.t<5000&&ac.n>=1&&ac.n<=3)darts=ac.n;
       const pl=P(p),legTurns=pl.turns.filter(t=>t.leg===(G.currentLeg||1)).length;
       pl.turns.push({leg:G.currentLeg||1,sc:bust?0:sc,bust:!!bust,d:darts,rem:remB,i:legTurns,fin});
+      try{h._msT=pl.turns[pl.turns.length-1];h._msP=p;}catch(e){}
       save();queueSync();
     }
   }catch(e){}
   return r;
 };
+// cofnięta tura znika też ze statystyk meczu
+{const _utMS=window.undoTurn;if(typeof _utMS==='function')window.undoTurn=function(){const h=__undoCand();const r=_utMS.apply(this,arguments);
+  try{if(h&&h._msT&&!__inHist(h)&&MS){const pl=P(h._msP),i=pl.turns.lastIndexOf(h._msT);if(i>=0){pl.turns.splice(i,1);save();queueSync();}}}catch(e){}return r;};}
 const _tw=window.trigWin;
 if(typeof _tw==='function')window.trigWin=function(pi,lastSc){
   try{
@@ -11547,14 +11586,18 @@ if(typeof _ph==='function')window.pushH=function(p,sc,bust){
         const h=G.history[G.history.length-1]||{},rem=(G.scores[p]||0)+(bust?0:sc),fin=!bust&&G.scores[p]===0;
         let darts=h.dartsUsed||3;const ac=window.__acTurnDarts;if(fin&&G.countingMode==='summary'&&ac&&Date.now()-ac.t<5000&&ac.n>=1&&ac.n<=3)darts=ac.n;
         const c=cell(dkey(Date.now()),G.players[p]||'Gracz'),v=bust?0:sc;
-        c.p+=v;c.d+=darts;if(rem<=170&&rem>=2&&(!G.dOut||!BOGEY.includes(rem)))c.cc++;if(fin)c.cs++;
-        if(v===180)c.t180++;else if(v>=140)c.t140++;else if(v>=100)c.t100++;
+        const _cc=rem<=170&&rem>=2&&(!G.dOut||!BOGEY.includes(rem));
+        c.p+=v;c.d+=darts;if(_cc)c.cc++;if(fin)c.cs++;
+        const _band=v===180?'t180':v>=140?'t140':v>=100?'t100':null;if(_band)c[_band]++;
+        try{h._day={c,v,darts,cc:_cc,cs:fin,band:_band};}catch(e){}
         save();
       }
     }
   }catch(e){}
   return r;
 };
+{const _utD=window.undoTurn;if(typeof _utD==='function')window.undoTurn=function(){const h=__undoCand();const r=_utD.apply(this,arguments);
+  try{if(h&&h._day&&!__inHist(h)){const x=h._day,c=x.c;c.p-=x.v;c.d-=x.darts;if(x.cc)c.cc--;if(x.cs)c.cs--;if(x.band)c[x.band]--;save();}}catch(e){}return r;};}
 /* ---------- jednorazowe uzupełnienie z historii gier ---------- */
 function backfill(){
   load();if(F.bf)return;F.bf=1;
@@ -12696,6 +12739,7 @@ if(typeof _ph==='function')window.pushH=function(p,sc,bust){
   try{
     if(X01()&&p===ownerIdx()){
       const v=bust?0:sc;if(v===180)inc('c180');if(v>=100)inc('tons');
+      try{const hh=G.history[G.history.length-1];if(hh)hh._ach={c180:v===180,tons:v>=100};}catch(e){}
       if(!bust&&G.scores[p]===0){
         if(sc>=100)unlock('co100');if(sc>=150)unlock('co150');if(sc===170)unlock('co170');
         if(G.mode==='501'){const L=G.currentLeg||1;let d=(G.history||[]).filter(h=>h.p===p&&(h.leg||1)===L).reduce((a,h)=>a+(h.dartsUsed||3),0);
@@ -12707,6 +12751,8 @@ if(typeof _ph==='function')window.pushH=function(p,sc,bust){
   }catch(e){}
   return r;
 };
+{const _utA=window.undoTurn;if(typeof _utA==='function')window.undoTurn=function(){const h=__undoCand();const r=_utA.apply(this,arguments);
+  try{if(h&&h._ach&&!__inHist(h)){if(h._ach.c180)inc('c180',-1);if(h._ach.tons)inc('tons',-1);}}catch(e){}return r;};}
 
 /* =================== WYNIKI TRENINGÓW =================== */
 const TR_NAMES={bobs27:"Bob's 27",co121:'121 Checkout',halveit:'Halve-It',shanghai:'Shanghai',atc:'Around the Clock'};
