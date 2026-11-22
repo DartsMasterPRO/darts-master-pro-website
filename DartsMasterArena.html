@@ -5420,6 +5420,8 @@ function onFbAuthChange(user) {
         const uRef = fb2.doc(fb2.db,'users',user.uid);
         fb2.getDoc(uRef).then(s => {
           if (s.exists() && !s.data().nick) fb2.updateDoc(uRef, { nick: safeNick(nick) || 'Gracz' });
+          // brak profilu (np. nowa baza) – zakładamy go od razu, żeby inni widzieli gracza
+          else if (!s.exists()) fb2.setDoc(uRef, { nick: safeNick(nick) || 'Gracz', wins:0, losses:0, games:0, createdAt: fb2.serverTimestamp() }).catch(()=>{});
         }).catch(()=>{});
       }
     } catch(e) {}
@@ -9705,9 +9707,14 @@ async function rptCloudOne(o){
   const f=window._fb,u=window._fbUser;
   const im=o.imgs||{};
   const imgs={before:await shrinkImg(im.before,480,0.6),after:await shrinkImg(im.after,480,0.6),now:await shrinkImg(im.now,480,0.55),mask:await shrinkImg(im.mask,480,0.7)};
-  const doc=Object.assign({},o,{imgs,log:(o.log||[]).slice(-40),uid:u.uid,nick:(window.safeNick?safeNick(u.displayName||''):'')||'Gracz',sentAt:Date.now(),acc:accSummary()});
-  const js=JSON.stringify(doc);if(js.length>900000){doc.imgs.now=null;}
-  await f.addDoc(f.collection(f.db,'acReports'),JSON.parse(JSON.stringify(doc)));
+  // Firestore nie przyjmuje tablic w tablicach (np. punkty kalibracji) – dane zgłoszenia zapisujemy jako tekst JSON, zdjęcia osobno
+  const rest=Object.assign({},o,{imgs:null,log:(o.log||[]).slice(-40),acc:accSummary()});
+  const doc={uid:u.uid,nick:(window.safeNick?safeNick(u.displayName||''):'')||'Gracz',sentAt:Date.now(),ver:o.ver||'',type:o.type||'',
+    j:JSON.stringify(rest),imgBefore:imgs.before||null,imgAfter:imgs.after||null,imgNow:imgs.now||null,imgMask:imgs.mask||null};
+  const size=()=>Object.values(doc).reduce((a,v)=>a+(typeof v==='string'?v.length:16),0);
+  if(size()>950000)doc.imgNow=null;
+  if(size()>950000){doc.imgBefore=null;}
+  await f.addDoc(f.collection(f.db,'acReports'),doc);
   rMark(o.ts);
 }
 let cloudBusy=false;
@@ -9716,8 +9723,9 @@ async function rptCloudSend(silent){
   const sent=rSent(),all=(await rptAll()).filter(o=>o&&o.ts&&!sent.has(o.ts));
   if(!all.length){if(!silent)toast('Wszystkie zgłoszenia są już wysłane ✅');return;}
   cloudBusy=true;let ok=0;
-  try{for(const o of all){try{await rptCloudOne(o);ok++;}catch(e){console.warn('rpt cloud',e);break;}}}finally{cloudBusy=false;}
-  if(!silent)toast(ok?'☁️ Wysłano do twórcy: '+ok+(ok<all.length?' z '+all.length:''):'❌ Nie udało się wysłać – spróbuj później');
+  let err='';
+  try{for(const o of all){try{await rptCloudOne(o);ok++;}catch(e){console.warn('rpt cloud',e);err=(e&&(e.code||e.message))||'';break;}}}finally{cloudBusy=false;}
+  if(!silent)toast(ok?'☁️ Wysłano do twórcy: '+ok+(ok<all.length?' z '+all.length+(err?' ('+err+')':''):''):'❌ Nie udało się wysłać'+(err?' ('+err+')':'')+(/permission/i.test(err)?' – sprawdź reguły Firestore':''));
   await rptCount();
 }
 function confirmClear(){return RPT.cnt?window.confirm('Usunąć '+RPT.cnt+' zgłoszeń?'):true;}
@@ -15681,7 +15689,8 @@ setTimeout(()=>{try{const a=get();let ch=false;(G.players||[]).forEach((p,i)=>{c
   }
   function download(){
     if(!cache.length)return;const d=new Date(),pad=x=>String(x).padStart(2,'0');
-    const reports=cache.map(x=>x.data);
+    const reports=cache.map(x=>{const d=x.data;if(!d.j)return d;let r={};try{r=JSON.parse(d.j);}catch(e){}
+      r.imgs={before:d.imgBefore||null,after:d.imgAfter||null,now:d.imgNow||null,mask:d.imgMask||null};r.nick=d.nick;r.uid=d.uid;r.sentAt=d.sentAt;return r;});
     const blob=new Blob([JSON.stringify({app:'Darts Master Arena',kind:'autocam-reports',source:'cloud',exported:d.toISOString(),count:reports.length,reports})],{type:'application/json'});
     const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='darts-master-arena-zgloszenia-graczy-'+d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())+'-'+pad(d.getHours())+pad(d.getMinutes())+'.json';
     document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},4000);toast('📥 Pobrano '+reports.length+' zgłoszeń');}
