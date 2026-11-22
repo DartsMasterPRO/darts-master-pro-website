@@ -776,6 +776,14 @@ input{outline:none}
       <span class="menu-item-icon">🐞</span>
       <span>Pobierz zgłoszenia (plik) <b id="menu-rpt-cnt" style="color:#ffd700"></b></span>
     </div>
+    <div class="menu-item" onclick="closeMenu(); if(window.AutoCam)AutoCam.sendReports()">
+      <span class="menu-item-icon">☁️</span>
+      <span>Wyślij zgłoszenia do twórcy <b id="menu-rpt-send-cnt" style="color:#00e5ff"></b></span>
+    </div>
+    <div class="menu-item" id="menu-rpt-admin" style="display:none" onclick="closeMenu(); if(window.RptAdmin)RptAdmin.open()">
+      <span class="menu-item-icon">📬</span>
+      <span>Zgłoszenia od graczy</span>
+    </div>
     <div class="menu-item" id="menu-rpt-clear" style="display:none" onclick="closeMenu(); if(window.AutoCam)AutoCam.clearReports()">
       <span class="menu-item-icon">🗑</span>
       <span>Usuń wysłane zgłoszenia</span>
@@ -8541,7 +8549,7 @@ const CRICKET=[15,16,17,18,19,20,25];
 const APP_VER='2026.11.22-1'; // wersja rozpoznawania (trafia do zgłoszeń)
 const LS='dm_autocam_v1', WORK_W=800, TICK=90, STABLE_N=3, ROI_K=1.45;
 
-const S={bgCal:true,learn:true,collectReports:true,fallDetect:true,occl:false,sayDarts:true,voice:'',unsureMm:2.5,hideComp:false,pointLen:27,autoCal:true,zoom:1,thr:40,tipDir:'auto',autoConfirm:true,debug:false,lockExp:true,deviceId:''};
+const S={bgCal:true,learn:true,collectReports:true,autoSend:false,fallDetect:true,occl:false,sayDarts:true,voice:'',unsureMm:2.5,hideComp:false,pointLen:27,autoCal:true,zoom:1,thr:40,tipDir:'auto',autoConfirm:true,debug:false,lockExp:true,deviceId:''};
 let CAL=null;
 function loadCfg(){try{const o=JSON.parse(localStorage.getItem(LS)||'{}');if(o.s){if(!(o.v>=3))delete o.s.thr;Object.assign(S,o.s);}if(o.cal&&o.cal.pts&&o.cal.pts.length===4)CAL=o.cal;}catch(e){}}
 function saveCfg(){try{localStorage.setItem(LS,JSON.stringify({v:3,s:S,cal:CAL}));}catch(e){}}
@@ -9642,7 +9650,7 @@ async function rptAdd(o){RPT.mem.push(o);if(RPT.mem.length>40)RPT.mem.shift();co
 async function rptAll(){const db=await idb();if(!db)return RPT.mem.slice();
   try{return await new Promise((ok,er)=>{const q=db.transaction('r').objectStore('r').getAll();q.onsuccess=()=>ok(q.result);q.onerror=er;});}catch(e){return RPT.mem.slice();}}
 async function rptClear(){RPT.mem=[];const db=await idb();if(db){try{await new Promise(ok=>{const t=db.transaction('r','readwrite');t.objectStore('r').clear();t.oncomplete=ok;});}catch(e){}}await rptCount();}
-async function rptCount(){const a=await rptAll();RPT.cnt=a.length;{const m=$('menu-rpt-cnt');if(m)m.textContent=RPT.cnt?'('+RPT.cnt+')':'';const c=$('menu-rpt-clear');if(c)c.style.display=RPT.cnt?'':'none';}const b=$('dm-rpt-btn');if(b)b.textContent='📤 WYŚLIJ ZGŁOSZENIA ('+RPT.cnt+')';
+async function rptCount(){const a=await rptAll();RPT.cnt=a.length;{const _s=rSent();RPT.unsent=a.filter(o=>o&&o.ts&&!_s.has(o.ts)).length;const sb=$('dm-rpt-send');if(sb)sb.textContent='☁️ WYŚLIJ DO TWÓRCY ('+RPT.unsent+')';const ms=document.getElementById('menu-rpt-send-cnt');if(ms)ms.textContent=RPT.unsent?'('+RPT.unsent+')':'';}{const m=$('menu-rpt-cnt');if(m)m.textContent=RPT.cnt?'('+RPT.cnt+')':'';const c=$('menu-rpt-clear');if(c)c.style.display=RPT.cnt?'':'none';}const b=$('dm-rpt-btn');if(b)b.textContent='📥 POBIERZ PLIK ('+RPT.cnt+')';
   const o=$('dm-opt-btn');if(o)o.innerHTML='⚙️ OPCJE'+(RPT.cnt?' <span style="color:#ffd700">🐞'+RPT.cnt+'</span>':'');return RPT.cnt;}
 function roiJpeg(d,cr){try{if(!d||!GEO)return null;const c=document.createElement('canvas');c.width=GEO.rw;c.height=GEO.rh;const x=c.getContext('2d');
   const id=x.createImageData(GEO.rw,GEO.rh);id.data.set(d);for(let i=3;i<id.data.length;i+=4)id.data[i]=255;x.putImageData(id,0,0);
@@ -9673,7 +9681,7 @@ function report(type,d,corrected,tap){
     geo:{rx:GEO.rx,ry:GEO.ry,rw:GEO.rw,rh:GEO.rh,ww:GEO.ww,wh:GEO.wh,rpx:GEO.rpx,minA:GEO.minA,maxA:GEO.maxA,cal:CAL&&CAL.pts,pose:GEO.pose?{f:GEO.pose.f}:null},
     video:{vw,vh},settings:Object.assign({},S),noise:noiseEst,thr:effT(),log:LOGALL.slice(-60),ua:navigator.userAgent,
     imgs:{before:d?roiJpeg(d.before,cr):roiJpeg(ref),after:d?roiJpeg(d.after||ref,cr):null,now:frameJpeg(),mask:d?maskPng(d.px,cr):null}};
-  rptAdd(o).then(n=>{if(!RPT.toastShown){RPT.toastShown=true;toast('🐞 Zapisano zgłoszenie pomyłki — wyślij je z menu');}else toast('🐞 Zgłoszenie zapisane ('+n+')');});
+  rptAdd(o).then(n=>{if(S.autoSend&&cloudReady()){setTimeout(()=>rptCloudSend(true),1500);return;}if(!RPT.toastShown){RPT.toastShown=true;toast('🐞 Zapisano zgłoszenie pomyłki — wyślij je z menu');}else toast('🐞 Zgłoszenie zapisane ('+n+')');});
 }
 // Pobieranie zgłoszeń: jeden plik .json zapisany w folderze Pobrane (potem można go wysłać np. przez WhatsApp jako dokument)
 async function rptExport(){
@@ -9683,6 +9691,34 @@ async function rptExport(){
   const blob=new Blob([JSON.stringify({app:'Darts Master Arena',kind:'autocam-reports',ver:APP_VER,exported:d.toISOString(),count:all.length,acc:accSummary(),reports:all})],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},4000);
   toast('📥 Pobrano plik ze zgłoszeniami ('+all.length+') — potem możesz je usunąć w menu');
+}
+
+// ===== Wysyłanie zgłoszeń do twórcy przez Firebase (dodatkowo do pobierania pliku) =====
+function rSent(){try{return new Set(JSON.parse(localStorage.getItem('dm_rpt_sent')||'[]'));}catch(e){return new Set();}}
+function rMark(ts){try{const a=[...rSent()];a.push(ts);localStorage.setItem('dm_rpt_sent',JSON.stringify(a.slice(-500)));}catch(e){}}
+// zmniejsza zdjęcie (max 480 px, JPEG 0.6) – zgłoszenie mieści się w limicie dokumentu i mało kosztuje
+function shrinkImg(u,max,q){return new Promise(ok=>{try{if(!u||typeof u!=='string'||u.indexOf('data:image')!==0)return ok(u||null);if(u.indexOf('data:image/png')===0&&u.length<60000)return ok(u);
+  const im=new Image();im.onload=()=>{try{const k=Math.min(1,max/Math.max(im.width,im.height));const c=document.createElement('canvas');c.width=Math.max(1,Math.round(im.width*k));c.height=Math.max(1,Math.round(im.height*k));
+    c.getContext('2d').drawImage(im,0,0,c.width,c.height);ok(c.toDataURL('image/jpeg',q));}catch(e){ok(null);}};im.onerror=()=>ok(null);im.src=u;}catch(e){ok(null);}});}
+function cloudReady(){const f=window._fb,u=window._fbUser;return !!(f&&f.addDoc&&u&&!u.isAnonymous);}
+async function rptCloudOne(o){
+  const f=window._fb,u=window._fbUser;
+  const im=o.imgs||{};
+  const imgs={before:await shrinkImg(im.before,480,0.6),after:await shrinkImg(im.after,480,0.6),now:await shrinkImg(im.now,480,0.55),mask:await shrinkImg(im.mask,480,0.7)};
+  const doc=Object.assign({},o,{imgs,log:(o.log||[]).slice(-40),uid:u.uid,nick:(window.safeNick?safeNick(u.displayName||''):'')||'Gracz',sentAt:Date.now(),acc:accSummary()});
+  const js=JSON.stringify(doc);if(js.length>900000){doc.imgs.now=null;}
+  await f.addDoc(f.collection(f.db,'acReports'),JSON.parse(JSON.stringify(doc)));
+  rMark(o.ts);
+}
+let cloudBusy=false;
+async function rptCloudSend(silent){
+  if(cloudBusy)return;if(!cloudReady()){if(!silent)toast('Zaloguj się w trybie Online, żeby wysłać zgłoszenia');return;}
+  const sent=rSent(),all=(await rptAll()).filter(o=>o&&o.ts&&!sent.has(o.ts));
+  if(!all.length){if(!silent)toast('Wszystkie zgłoszenia są już wysłane ✅');return;}
+  cloudBusy=true;let ok=0;
+  try{for(const o of all){try{await rptCloudOne(o);ok++;}catch(e){console.warn('rpt cloud',e);break;}}}finally{cloudBusy=false;}
+  if(!silent)toast(ok?'☁️ Wysłano do twórcy: '+ok+(ok<all.length?' z '+all.length:''):'❌ Nie udało się wysłać – spróbuj później');
+  await rptCount();
 }
 function confirmClear(){return RPT.cnt?window.confirm('Usunąć '+RPT.cnt+' zgłoszeń?'):true;}
 function takeout(cur){
@@ -10605,8 +10641,9 @@ function mount(){
      '<button onclick="AutoCam.openSetup()" style="grid-column:span 2;color:#00e5ff;border-color:rgba(0,229,255,.4)">📐 ASYSTENT USTAWIENIA TELEFONU</button><button onclick="AutoCam.resetBg()">↺ RESET TŁA</button><button class="red" onclick="AutoCam.close()">✕ ZAMKNIJ WIDOK</button></div>'+
      '<div style="margin-top:10px;padding:10px;border:1px solid rgba(255,215,0,.35);border-radius:8px;background:rgba(255,215,0,.04)">'+
        '<div style="color:#ffd700;font-family:Bebas Neue,cursive;font-size:17px;letter-spacing:1px">🐞 ZGŁOSZENIA POMYŁEK</div>'+
-       '<div style="font-size:10px;color:#8888aa;line-height:1.5;margin:4px 0 8px">Każda poprawka lotki zapisuje obraz i dane rzutu. Wyślij plik autorowi rozpoznawania (np. wrzuć go do czatu z Claude), żeby dostroić liczenie do Twojej tarczy.</div>'+
-       '<div class="dm-sheet-btns" style="margin-top:0"><button id="dm-rpt-btn" onclick="AutoCam.exportReports()" style="color:#ffd700;border-color:rgba(255,215,0,.4)">📤 WYŚLIJ ZGŁOSZENIA (0)</button><button onclick="AutoCam.clearReports()">🗑 WYCZYŚĆ</button></div>'+
+       '<div style="font-size:10px;color:#8888aa;line-height:1.5;margin:4px 0 8px">Każda poprawka lotki zapisuje obraz i dane rzutu. Wyślij je twórcy jednym przyciskiem (trzeba być zalogowanym w trybie Online) albo pobierz plik – to pomaga poprawiać liczenie dla wszystkich.</div>'+
+       '<div class="dm-sheet-btns" style="margin-top:0"><button id="dm-rpt-send" onclick="AutoCam.sendReports()" style="grid-column:span 2;color:#00e5ff;border-color:rgba(0,229,255,.4)">☁️ WYŚLIJ DO TWÓRCY (0)</button><button id="dm-rpt-btn" onclick="AutoCam.exportReports()" style="color:#ffd700;border-color:rgba(255,215,0,.4)">📥 POBIERZ PLIK (0)</button><button onclick="AutoCam.clearReports()">🗑 WYCZYŚĆ</button></div>'+
+       '<div style="font-size:10px;color:#555577;margin-top:6px;user-select:all" id="ac-myuid"></div>'+'<label style="display:flex;justify-content:space-between;margin-top:8px;font-size:11px;color:#c8c8d8">Wysyłaj automatycznie do twórcy (gdy zalogowany) <input type="checkbox" id="ac-asend" onchange="AutoCam.set(\'autoSend\',this.checked)"></label>'+
        '<label style="display:flex;justify-content:space-between;margin-top:8px;font-size:11px;color:#c8c8d8">Zbieraj automatycznie przy poprawkach <input type="checkbox" id="ac-rpt" onchange="AutoCam.set(\'collectReports\',this.checked)"></label>'+
      '</div>'+
      '<div style="margin-top:10px;padding:10px;border:1px solid rgba(0,229,255,.3);border-radius:8px;background:rgba(0,229,255,.03)">'+
@@ -10627,7 +10664,7 @@ function mount(){
     const R=dmLastRect,nx=(R.sx+(e.clientX-r.left)/r.width*R.sw)/vw,ny=(R.sy+(e.clientY-r.top)/r.height*R.sh)/vh;
     addManual(nx,ny);
   });
-  const thr=$('ac-thr');thr.value=135-S.thr;thrUI();$('ac-tip').value=S.tipDir;$('ac-auto').checked=S.autoConfirm;$('ac-exp').checked=S.lockExp;$('ac-dbg').checked=S.debug;$('ac-say').checked=S.sayDarts!==false;if($('ac-req'))$('ac-req').checked=!window.Caller||Caller.reqOn;$('ac-bgc').checked=S.bgCal!==false;$('ac-rpt').checked=S.collectReports!==false;$('ac-learn').checked=S.learn!==false;lrnUI();rptCount();$('ac-fall').checked=S.fallDetect!==false;if($('ac-occl'))$('ac-occl').checked=S.occl===true;applyVoice();$('ac-hc').checked=!!S.hideComp;{const pl=$('ac-plen');pl.value=S.pointLen||27;pl.nextElementSibling.textContent=pl.value;}$('ac-acal').checked=S.autoCal!==false;
+  const thr=$('ac-thr');thr.value=135-S.thr;thrUI();$('ac-tip').value=S.tipDir;$('ac-auto').checked=S.autoConfirm;$('ac-exp').checked=S.lockExp;$('ac-dbg').checked=S.debug;$('ac-say').checked=S.sayDarts!==false;if($('ac-req'))$('ac-req').checked=!window.Caller||Caller.reqOn;$('ac-bgc').checked=S.bgCal!==false;$('ac-rpt').checked=S.collectReports!==false;{const z=$('ac-asend');if(z)z.checked=!!S.autoSend;}{const z=$('ac-myuid');const u=window._fbUser;if(z)z.textContent=u&&!u.isAnonymous?'Twój ID gracza: '+u.uid:'';}$('ac-learn').checked=S.learn!==false;lrnUI();rptCount();$('ac-fall').checked=S.fallDetect!==false;if($('ac-occl'))$('ac-occl').checked=S.occl===true;applyVoice();$('ac-hc').checked=!!S.hideComp;{const pl=$('ac-plen');pl.value=S.pointLen||27;pl.nextElementSibling.textContent=pl.value;}$('ac-acal').checked=S.autoCal!==false;
   $('ac-view').addEventListener('click',e=>{
     if(!GEO)return;const r=e.currentTarget.getBoundingClientRect();
     correctLast((e.clientX-r.left)/r.width,(e.clientY-r.top)/r.height);
@@ -10659,6 +10696,8 @@ window.AutoCam={
   sheet(){$('dm-sheet').classList.toggle('on');applyVoice();rptCount();lrnUI();accUI();},
   version:APP_VER,
   exportReports(){rptExport();},
+  sendReports(){rptCloudSend(false);},
+  reportsCloudReady(){return cloudReady();},
   reportCount(){return rptCount();},
   correctTap(nx,ny){correctLast(nx,ny);},
   hmSet(k,v){HMF[k]=k==='days'?+v:v;hmRender();},
@@ -15606,6 +15645,52 @@ setTimeout(()=>{try{const a=get();let ch=false;(G.players||[]).forEach((p,i)=>{c
     if(t&&t.id==='exit-stay'){hide();arm();}
     else if(t&&t.closest&&t.closest('#exit-home')){hide();arm();goHome();}
   });
+})();
+</script>
+
+<!-- ===== Zgłoszenia od graczy (widoczne tylko dla administratora) ===== -->
+<script>
+(function(){
+  const fb=()=>window._fb,me=()=>window._fbUser;
+  let isAdmin=false,cache=[];
+  async function check(){
+    try{const f=fb(),u=me();if(!f||!u||u.isAnonymous)return false;
+      const d=await f.getDoc(f.doc(f.db,'config','admins'));
+      isAdmin=!!(d.exists()&&Array.isArray(d.data().uids)&&d.data().uids.includes(u.uid));
+      const m=document.getElementById('menu-rpt-admin');if(m)m.style.display=isAdmin?'':'none';
+    }catch(e){}return isAdmin;}
+  let lastUid=null;setInterval(()=>{const u=me();const id=u&&u.uid;if(id!==lastUid){lastUid=id;check();}},4000);
+  function box(html){let o=document.getElementById('rpt-admin-modal');if(!o){o=document.createElement('div');o.id='rpt-admin-modal';
+    o.style.cssText='position:fixed;inset:0;z-index:99990;background:rgba(5,5,12,.92);display:flex;align-items:center;justify-content:center;padding:16px';document.body.appendChild(o);}
+    o.innerHTML='<div style="width:100%;max-width:420px;max-height:86vh;overflow:auto;background:#12121e;border:1px solid rgba(0,229,255,.35);border-radius:14px;padding:16px;color:#e8e8f4;font-family:Rajdhani,sans-serif">'+html+'</div>';o.style.display='flex';return o;}
+  async function open(){
+    if(!(await check())){toast('Brak uprawnień administratora');return;}
+    box('<div style="font-family:Bebas Neue,cursive;font-size:22px;color:#00e5ff">📬 ZGŁOSZENIA OD GRACZY</div><div style="margin:10px 0;color:#8888aa">Wczytuję…</div>');
+    try{const f=fb();const q=f.query(f.collection(f.db,'acReports'),f.orderBy('sentAt','desc'),f.limit(500));
+      const snap=await f.getDocs(q);cache=[];snap.forEach(d=>cache.push({id:d.id,data:d.data()}));
+    }catch(e){box('<div style="color:#ff6b6b">❌ Nie udało się wczytać: '+escH(e.message||e)+'</div><button onclick="RptAdmin.close()" style="margin-top:12px;width:100%;min-height:44px">ZAMKNIJ</button>');return;}
+    const by={};cache.forEach(x=>{const k=x.data.nick||'Gracz';by[k]=(by[k]||0)+1;});
+    const rows=Object.entries(by).sort((a,b)=>b[1]-a[1]).map(([n,c])=>'<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.06)"><span>'+escH(n)+'</span><b>'+c+'</b></div>').join('');
+    box('<div style="font-family:Bebas Neue,cursive;font-size:22px;color:#00e5ff">📬 ZGŁOSZENIA OD GRACZY</div>'+
+      '<div style="margin:6px 0 10px;color:#8888aa;font-size:13px">Razem: <b style="color:#fff">'+cache.length+'</b>. Pobierz plik i wrzuć go do czatu z Claude – przeanalizuje pomyłki kamery.</div>'+
+      (rows||'<div style="color:#8888aa">Brak zgłoszeń</div>')+
+      '<div style="display:grid;gap:8px;margin-top:14px">'+
+      '<button onclick="RptAdmin.download()" style="min-height:44px;border-radius:10px;border:1px solid rgba(255,215,0,.5);background:rgba(255,215,0,.08);color:#ffd700;font-weight:700"'+(cache.length?'':' disabled')+'>📥 POBIERZ WSZYSTKIE (PLIK)</button>'+
+      '<button onclick="RptAdmin.removeAll()" style="min-height:44px;border-radius:10px;border:1px solid rgba(255,60,60,.5);background:rgba(255,60,60,.08);color:#ff6b6b;font-weight:700"'+(cache.length?'':' disabled')+'>🗑 USUŃ Z SERWERA</button>'+
+      '<button onclick="RptAdmin.close()" style="min-height:44px;border-radius:10px;border:1px solid rgba(255,255,255,.2);background:transparent;color:#c8c8d8">ZAMKNIJ</button></div>');
+  }
+  function download(){
+    if(!cache.length)return;const d=new Date(),pad=x=>String(x).padStart(2,'0');
+    const reports=cache.map(x=>x.data);
+    const blob=new Blob([JSON.stringify({app:'Darts Master Arena',kind:'autocam-reports',source:'cloud',exported:d.toISOString(),count:reports.length,reports})],{type:'application/json'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='darts-master-arena-zgloszenia-graczy-'+d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())+'-'+pad(d.getHours())+pad(d.getMinutes())+'.json';
+    document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},4000);toast('📥 Pobrano '+reports.length+' zgłoszeń');}
+  async function removeAll(){
+    if(!cache.length)return;if(!confirm('Usunąć '+cache.length+' zgłoszeń z serwera? Najpierw je pobierz.'))return;
+    const f=fb();let n=0;for(const x of cache){try{await f.deleteDoc(f.doc(f.db,'acReports',x.id));n++;}catch(e){}}
+    toast('🗑 Usunięto '+n);cache=[];open();}
+  function close(){const o=document.getElementById('rpt-admin-modal');if(o)o.style.display='none';}
+  window.RptAdmin={open,download,removeAll,close,check};
 })();
 </script>
 <!-- ===== Paczka 2: układ ekranu gry i wygoda (nadpisuje wcześniejsze style) ===== -->
