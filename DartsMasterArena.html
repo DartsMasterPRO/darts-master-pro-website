@@ -8548,7 +8548,7 @@ const RB={bi:6.35,bo:15.9,ti:99,to:107,di:162,dd:170};
 const CAL_BOARD=[[0,170],[170,0],[0,-170],[-170,0]]; // 20, 6, 3, 11 (oś Y w górę)
 const CAL_LBL=['20','6','3','11'];
 const CRICKET=[15,16,17,18,19,20,25];
-const APP_VER='2026.11.23-1'; // wersja rozpoznawania (trafia do zgłoszeń)
+const APP_VER='2026.11.23-3'; // wersja rozpoznawania (trafia do zgłoszeń)
 const LS='dm_autocam_v1', WORK_W=800, TICK=90, STABLE_N=3, ROI_K=1.45;
 
 const S={bgCal:true,learn:true,collectReports:true,autoSend:false,fallDetect:true,occl:false,sayDarts:true,voice:'',unsureMm:2.5,hideComp:false,pointLen:27,autoCal:true,zoom:1,thr:40,tipDir:'auto',autoConfirm:true,debug:false,lockExp:true,deviceId:'',hiRes:true,hiTip:true};
@@ -8556,6 +8556,7 @@ let CAL=null;
 function loadCfg(){try{const o=JSON.parse(localStorage.getItem(LS)||'{}');if(o.s){if(!(o.v>=3))delete o.s.thr;Object.assign(S,o.s);}if(o.cal&&o.cal.pts&&o.cal.pts.length===4)CAL=o.cal;}catch(e){}}
 function saveCfg(){try{localStorage.setItem(LS,JSON.stringify({v:3,s:S,cal:CAL}));}catch(e){}}
 loadCfg();
+if(S.hiResV!==2){S.hiRes=true;S.hiResV=2;saveCfg();} // 23.11.2026: Full HD wyłączało się bez powodu — próbujemy raz jeszcze
 
 /* ---------- geometria ---------- */
 function solveH(src,dst){
@@ -8919,9 +8920,11 @@ function hiRefine(tp){try{
   if(e<0)return{why:'brak grota w profilu'};
   let s=S0+e*ST;if(e+1<prof.length&&prof[e]>prof[e+1])s+=ST*Math.min(1,(prof[e]-thr)/(prof[e]-prof[e+1]));
   if(Math.abs(s)>maxS)return{why:'przesunięcie '+(s/ppm).toFixed(1)+' mm — za duże, pomijam'};
+  // 23.11.2026 (2. test): cofanie grota i przesuw w bok częściej psuły wynik niż pomagały (2 z 2 zmian pola były błędne) →
+  // zostaje tylko DOCIĄGANIE grota do przodu (cienki/złoty grot ucięty przez zgrubną analizę)
+  if(s<0.15*ppm)return{why:'grot bez zmian ('+(s/ppm).toFixed(1)+' mm)'};
   // wyśrodkowanie w poprzek grota (kawałek tuż przed końcem)
-  let lw=0,lsum=0;for(let u=Math.max(S0,s-1.5*pa);u<=s-0.3*pa;u+=ST)for(let w=-SIDE+1;w<=SIDE-1;w++){const v=at(tx+dx*u-dy*w,ty+dy*u+dx*w)-thr;if(v>0){lw+=v;lsum+=v*w;}}
-  let off=lw>0?lsum/lw:0;off=Math.max(-ppm,Math.min(ppm,off));
+  let off=0;
   const X=tx+dx*s-dy*off,Y=ty+dy*s+dx*off;
   return{x:X/k-GEO.rx-.5,y:Y/k-GEO.ry-.5,mm:+(s/ppm).toFixed(2),lat:+(off/ppm).toFixed(2),ppm:+ppm.toFixed(2),c:Math.round(Cc),n:Math.round(Nn)};
 }catch(e){return null;}}
@@ -9102,8 +9105,8 @@ function afterDart(){
 const TT={s:0,n:0,w:0};
 function tickT(){const t0=performance.now();tick();const dt=performance.now()-t0;if(!camReady||!GEO)return;
   TT.s+=dt;TT.n++;if(TT.n>4000){TT.s/=2;TT.n/=2;}
-  if(dt>60)TT.w++;else if(TT.w>0)TT.w-=0.25;
-  if(TT.n>=60&&TT.w>=25&&Math.max(vw,vh)>1300&&S.hiRes!==false){S.hiRes=false;saveCfg();TT.w=0;TT.s=0;TT.n=0;
+  if(dt>190)TT.w++;else if(TT.w>0)TT.w-=0.25; // 23.11.2026: przy 720p telefon i tak miał ~80 ms/odczyt — próg 60 ms wyłączał Full HD bez powodu
+  if(TT.n>=60&&TT.w>=25&&TT.s/TT.n>180&&Math.max(vw,vh)>1300&&S.hiRes!==false){S.hiRes=false;saveCfg();TT.w=0;TT.s=0;TT.n=0;
     lg('analiza za wolna przy '+vw+'×'+vh+' — przechodzę na 1280×720');toast('📷 Telefon nie wyrabia z Full HD — przełączam kamerę na 1280×720');
     try{track&&track.applyConstraints({width:{ideal:1280},height:{ideal:720},frameRate:{ideal:30}});}catch(e){}}}
 function tick(){
@@ -9292,6 +9295,8 @@ function analyze(cur){
   let OCCF=false;if(OCC&&tipBlocked(tp,excl)){const q=occlTip(r.px,excl);if(q&&q.vis>0.6)lg('styk z lotką, ale widać '+Math.round(q.vis*100)+'% — zostawiam zwykły grot');if(q&&q.vis<=0.6){tp.x=q.x;tp.y=q.y;tp.geo=true;OCCF=true;candTip=null;lg('lotka zasłonięta przez wcześniejszą — widać '+Math.round(q.vis*100)+'%, grot z długości lotki'+(S.debug?' ['+q.dbg+']':''));}}
   // uśrednienie grota z dwóch niezależnych odczytów (mniej szumu → pewniejsze pole przy drucie)
   if(candTip&&Math.hypot(tp.x-candTip[0],tp.y-candTip[1])<GEO.rpx*0.03){tp.x=(tp.x+candTip[0])/2;tp.y=(tp.y+candTip[1])/2;}
+  // mała plama (piórko/szum) z doliczonym „ukrytym grotem” +80–110 mm = fantom: 4 z 13 poprawek 23.11.2026 to „→ MISS” właśnie z tego
+  if(tp.hc&&LAST_FIX>40&&r.px.length<GEO.minA*2.2){lg('mała zmiana ('+r.px.length+' px) z doliczonym grotem +'+LAST_FIX+' mm — to raczej piórko/szum, nie lotka');LAST_FIX=0;ref=cur;hiSnap();status(turn.length?'Czekam na kolejną lotkę':'Gotowe — rzucaj 🎯','#00ff88');return;}
   let HIF=null;if(!OCCF){const q=hiRefine(tp);if(q&&q.x!==undefined){const s0=normToScore(...workToNorm(tp.x,tp.y)).lbl;tp.x=q.x;tp.y=q.y;HIF=q;const s1=normToScore(...workToNorm(q.x,q.y)).lbl;lg('grot Full HD: '+(q.mm>=0?'+':'')+q.mm+' mm wzdłuż, '+q.lat+' mm w bok ('+q.ppm+' px/mm)'+(s0!==s1?' → '+s0+' → '+s1:''));}else if(q&&q.why&&S.debug)lg('grot Full HD: '+q.why);}
   let[nx,ny]=workToNorm(tp.x,tp.y);let sc=normToScore(nx,ny);
   if(sc.lbl==='MISS'&&tp.tmax!==undefined&&!tp.geo){ // grot poza tarczą? sprawdź drugi koniec
