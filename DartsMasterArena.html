@@ -9779,10 +9779,16 @@ const AKEY='dm_ac_acc';let ACC=null;
 function accDay(){const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();}
 function accLoad(){if(ACC&&ACC.day===accDay())return ACC;let o=null;try{o=JSON.parse(localStorage.getItem(AKEY)||'null');}catch(e){}
   if(!o||o.day!==accDay())o={day:accDay(),auto:0,fixed:0,missed:0};ACC=o;return ACC;}
-function accAdd(k){try{const a=accLoad();a[k]=(a[k]||0)+1;localStorage.setItem(AKEY,JSON.stringify(a));accUI();}catch(e){}}
-function accSummary(){try{const a=accLoad(),tot=a.auto+a.missed;return{day:a.day,auto:a.auto,fixed:a.fixed,missed:a.missed,okPct:tot?Math.max(0,Math.round((a.auto-a.fixed)/tot*100)):null};}catch(e){return null;}}
-function accUI(){const e=document.getElementById('ac-acc');if(!e)return;const s=accSummary();if(!s)return;const tot=s.auto+s.missed;
-  e.innerHTML=tot?'Dziś: <b style="color:#00ff88">'+s.okPct+'%</b> lotek bez poprawki ('+(s.auto-s.fixed)+' z '+tot+') · poprawione '+s.fixed+' · niewykryte '+s.missed:'Dziś jeszcze brak lotek z kamery.';}
+const VKEY='dm_ac_accv';let ACCV=null;
+function accVLoad(){if(ACCV&&ACCV.ver===APP_VER)return ACCV;let o=null;try{o=JSON.parse(localStorage.getItem(VKEY)||'null');}catch(e){}
+  if(!o||o.ver!==APP_VER)o={ver:APP_VER,since:accDay(),auto:0,fixed:0,missed:0};ACCV=o;return ACCV;}
+function accAdd(k){try{const a=accLoad();a[k]=(a[k]||0)+1;localStorage.setItem(AKEY,JSON.stringify(a));const v=accVLoad();v[k]=(v[k]||0)+1;localStorage.setItem(VKEY,JSON.stringify(v));accUI();}catch(e){}}
+function accPct(a){const t=a.auto+a.missed;return t?Math.max(0,Math.round((a.auto-a.fixed)/t*1000)/10):null;}
+function accSummary(){try{const a=accLoad(),v=accVLoad();return{day:a.day,auto:a.auto,fixed:a.fixed,missed:a.missed,okPct:accPct(a),
+  v:{ver:v.ver,since:v.since,auto:v.auto,fixed:v.fixed,missed:v.missed,okPct:accPct(v)}};}catch(e){return null;}}
+function accUI(){const e=document.getElementById('ac-acc');if(!e)return;const s=accSummary();if(!s)return;
+  const ln=(lab,a)=>{const t=a.auto+a.missed;return t?lab+': <b style="color:'+(a.okPct>=95?'#00ff88':a.okPct>=85?'#ffd700':'#ff6b6b')+'">'+a.okPct+'%</b> ('+(a.auto-a.fixed)+' z '+t+' lotek dobrze) · poprawione '+a.fixed+' · niewykryte '+a.missed:lab+': brak lotek z kamery.';};
+  e.innerHTML=ln('Dziś',s)+'<br>'+ln('Od '+s.v.since+' (wersja '+s.v.ver+')',s.v)+'<br><span style="color:#8888aa">Cel: 95%</span>';}
 /* ---------- PODPOWIEDŹ USTAWIENIA: lotki często chowają się za sobą ---------- */
 let OCCN=0,OCCD=0;
 function occlNote(){
@@ -15677,8 +15683,9 @@ setTimeout(()=>{try{const a=get();let ch=false;(G.players||[]).forEach((p,i)=>{c
     try{const f=fb();const q=f.query(f.collection(f.db,'acReports'),f.orderBy('sentAt','desc'),f.limit(500));
       const snap=await f.getDocs(q);cache=[];snap.forEach(d=>cache.push({id:d.id,data:d.data()}));
     }catch(e){box('<div style="color:#ff6b6b">❌ Nie udało się wczytać: '+escH(e.message||e)+'</div><button onclick="RptAdmin.close()" style="margin-top:12px;width:100%;min-height:44px">ZAMKNIJ</button>');return;}
-    const by={};cache.forEach(x=>{const k=x.data.nick||'Gracz';by[k]=(by[k]||0)+1;});
-    const rows=Object.entries(by).sort((a,b)=>b[1]-a[1]).map(([n,c])=>'<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.06)"><span>'+escH(n)+'</span><b>'+c+'</b></div>').join('');
+    const by={},acc={};cache.forEach(x=>{const k=x.data.nick||'Gracz';by[k]=(by[k]||0)+1;
+      if(!acc[k]){try{const a=JSON.parse(x.data.j||'{}').acc;const v=a&&a.v;if(v&&(v.auto+v.missed)>0)acc[k]=v;}catch(e){}}});
+    const rows=Object.entries(by).sort((a,b)=>b[1]-a[1]).map(([n,c])=>'<div style="display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.06)"><span>'+escH(n)+'</span><span style="text-align:right">'+(acc[n]?'<b style="color:'+(acc[n].okPct>=95?'#00ff88':acc[n].okPct>=85?'#ffd700':'#ff6b6b')+'">'+acc[n].okPct+'%</b> <span style="color:#8888aa;font-size:12px">('+(acc[n].auto+acc[n].missed)+' lotek)</span> · ':'')+'<b>'+c+'</b> zgł.</span></div>').join('');
     box('<div style="font-family:Bebas Neue,cursive;font-size:22px;color:#00e5ff">📬 ZGŁOSZENIA OD GRACZY</div>'+
       '<div style="margin:6px 0 10px;color:#8888aa;font-size:13px">Razem: <b style="color:#fff">'+cache.length+'</b>. Pobierz plik i wrzuć go do czatu z Claude – przeanalizuje pomyłki kamery.</div>'+
       (rows||'<div style="color:#8888aa">Brak zgłoszeń</div>')+
