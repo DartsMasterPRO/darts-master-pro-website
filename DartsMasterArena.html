@@ -10586,7 +10586,7 @@ function suRender(){
     const qSt=m.q>=0.8?2:m.q>=0.55?1:0;
     h+=suRow(qSt,'Rozpoznanie tarczy (autokalibracja)',Math.round(m.q*100)+'%',m.q<0.55?'Słabe — popraw światło lub ustawienie.':'');
     const pp=m.ppm||0,pSt=pp>=2.6?2:pp>=1.8?1:0;
-    h+=suRow(pSt,'Szczegółowość obrazu (T20)',pp.toFixed(1)+' px/mm',pSt===2?'Dobrze — drut jest wyraźny.':(m.portrait?'Obróć telefon poziomo — tarcza wypełni kadr ok. 2× lepiej. ':'')+(m.fill<0.75?'Przysuń telefon albo użyj zoomu.':'')+(Math.max(vw,vh)<1900?' Kamera daje '+vw+'×'+vh+' (Full HD niedostępne).':''));
+    h+=suRow(pSt,'Szczegółowość obrazu (T20)',pp.toFixed(1)+' px/mm',pSt===2?'Dobrze — drut jest wyraźny.':(m.fill<0.8?'Przysuń telefon albo użyj zoomu — tarcza powinna wypełniać prawie całą szerokość kadru.':'')+(Math.max(vw,vh)<1900?' Kamera daje '+vw+'×'+vh+' (Full HD niedostępne).':''));
     const t=S.thr,tSt=t<=45?2:t<50?1:0;
     h+=suRow(tSt,'Czułość wykrywania',t,tSt===2?'Dobrze.':'Za niska — ciemne lufki i groty mogą znikać. Ustaw suwak czułości w zielone pole.');
     const sc=Math.round((aSt+fSt+dSt+uSt+lSt+qSt+pSt+tSt)/16*100);
