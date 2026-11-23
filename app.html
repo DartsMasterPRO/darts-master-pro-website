@@ -3006,6 +3006,23 @@ function addDart(v){
   // Wszystkie dźwięki są grają dźwięk lotek gracza, bez specjalnego dźwięku dla bulla
   const srcs=[SRC_LOTKA1,SRC_LOTKA2,SRC_LOTKA3,SRC_LOTKA4];
   playDartSound(srcs[G.cp]||SRC_LOTKA1);
+  try{crowdT20(idx);}catch(e){}
+}
+// 🎉 Kibice: każde T20 → „jej”, dwa T20 i pudło trzeciej → „ooouu” (trzecie T20 = 180, ma własny dźwięk przy zatwierdzeniu)
+const SRC_JEJ='media/jej.mp3',SRC_OOOUU='media/ooouu.mp3';
+function playCrowd(src){if(isMuted)return;try{const a=new Audio(src);a.volume=1.0;const p=a.play();if(p&&p.catch)p.catch(()=>{});}catch(e){}}
+function crowdLbl(L,idx,rem){
+  const t20=i=>L[i]==='T20';
+  if(t20(idx)){if(idx===2&&t20(0)&&t20(1))return;setTimeout(()=>playCrowd(SRC_JEJ),120);return;}
+  if(idx===2&&t20(0)&&t20(1)&&rem!==0)setTimeout(()=>playCrowd(SRC_OOOUU),120);
+}
+function crowdT20(idx){
+  const t20=i=>G.throws[i]===60&&G.throwMults[i]===3;
+  if(t20(idx)){if(idx===2&&t20(0)&&t20(1))return;setTimeout(()=>playCrowd(SRC_JEJ),120);return;}
+  if(idx===2&&t20(0)&&t20(1)){
+    // nie przy zejściu (wygrany leg ma swój dźwięk)
+    try{if(G.scores){const r=G.scores[G.cp]-G.throws.reduce((a,b)=>a+(b||0),0);if(r===0)return;}}catch(e){}
+    setTimeout(()=>playCrowd(SRC_OOOUU),120);}
 }
 
 function undoLast(){
@@ -10346,10 +10363,20 @@ function dmListen(){
     if(!snap.exists())return;const d=snap.data();let best=null;
     for(const key of Object.keys(d)){if(!key.endsWith('_frame'))continue;const u=key.slice(0,-6);if(u===my)continue;
       const m=d[u+'_dm'],sc=(m&&m.cp===G.cp?2:0)+(m?1:0);if(!best||sc>best.s)best={u,s:sc};}
-    if(!best)return;const u=best.u,seq=d[u+'_seq']||0;RIV.uid=u;RIV.dm=d[u+'_dm']||null;
+    if(!best)return;const u=best.u,seq=d[u+'_seq']||0;RIV.uid=u;RIV.dm=d[u+'_dm']||null;try{rivCrowd(RIV.dm);}catch(e){}
     if(seq!==RIV.seq&&d[u+'_frame']){RIV.seq=seq;const room=G._onlineRoomId,im=new Image();im.onload=()=>{RIV.img=im;RIV.ts=Date.now();RIV.room=room;RIV.seen=1;};im.src='data:image/jpeg;base64,'+d[u+'_frame'];}
     dmRender();
   },e=>lg('odbiór kamery: '+(e.code||e.message)));
+}
+// 🎉 Kibice także przy lotkach PRZECIWNIKA (gra online z kamerą): T20 → „jej”, T20+T20+pudło → „ooouu”
+const RCR={k:'',n:0,init:false};
+function rivCrowd(m){
+  if(!m||!Array.isArray(m.darts)||typeof crowdLbl!=='function')return;
+  const k=(G.currentLeg||1)+'|'+(G.round||1)+'|'+m.cp,L=m.darts.map(x=>String(x.l||'').replace('?',''));
+  if(!RCR.init){RCR.init=true;RCR.k=k;RCR.n=L.length;return;} // pierwszy odczyt po wejściu do pokoju — bez dźwięku
+  if(k!==RCR.k){RCR.k=k;RCR.n=0;}else if(L.length<RCR.n)RCR.n=L.length;
+  for(let i=RCR.n;i<L.length&&i<3;i++){let rem=null;try{if(G.scores&&G.scores[m.cp]!=null)rem=G.scores[m.cp]-m.darts.slice(0,i+1).reduce((a,x)=>a+(+x.v||0),0);}catch(e){}crowdLbl(L,i,rem);}
+  RCR.n=Math.max(RCR.n,L.length);
 }
 function dmClearMine(){
   try{if(!isOnline())return;const{db,doc,setDoc,deleteField}=window._fb,uid=window._fbUser.uid;
@@ -10363,7 +10390,7 @@ function dmOpen(){
 function dmClose(){
   if(!dmOn)return;dmOn=false;$('dm').classList.remove('on');$('dm-sheet').classList.remove('on');
   cancelAnimationFrame(dmRaf);clearInterval(dmTimer);if(dmUnsub){dmUnsub();dmUnsub=null;}
-  dmClearMine();RIV.img=null;RIV.dm=null;RIV.seq=-1;RIV.ts=0;if(RIV.room!==G._onlineRoomId){RIV.seen=0;RIV.room=null;}if(running)stop();
+  dmClearMine();RCR.init=false;RIV.img=null;RIV.dm=null;RIV.seq=-1;RIV.ts=0;if(RIV.room!==G._onlineRoomId){RIV.seen=0;RIV.room=null;}if(running)stop();
 }
 function nextRound(){
   if(BULL.active){if(BULL.res&&!BULL.locked){try{BULL.cb.onConfirm&&BULL.cb.onConfirm(Object.assign({img:bullImg(BULL.res.tip)},BULL.res));}catch(e){}}return;}
